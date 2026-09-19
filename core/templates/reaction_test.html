@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="hud-card border-cyan">
+    <h4 class="text-neon mb-2 fw-bold">STEP 1: PSYCHOMOTOR DECISION LATENCY TEST</h4>
+    <p class="text-white-50">Target: Select the <strong class="text-neon">LARGER</strong> numerical value immediately upon appearance. Exactly 10 trials required.</p>
+    
+    <div id="game-area" class="text-center py-4">
+        <h5 id="trial-counter" class="text-neon mb-4 fw-bold" style="font-family: 'Orbitron'; font-size: 1.1rem;">Trial 1 of 10</h5>
+        <div class="d-flex justify-content-center gap-4 mb-4">
+            <button id="btn1" class="hud-btn btn-lg px-5 py-4 fs-1 fw-bold style-num-btn" onclick="processClick(num1)"></button>
+            <button id="btn2" class="hud-btn btn-lg px-5 py-4 fs-1 fw-bold style-num-btn" onclick="processClick(num2)"></button>
+        </div>
+    </div>
+
+    <form id="rxn-form" method="POST" style="display:none;">
+        {% csrf_token %}
+        <input type="hidden" name="avg_rxn_time" id="avg_rxn_input">
+        <div class="text-center py-4">
+            <h4 class="text-neon mb-3 fw-bold"><i class="bi bi-check-circle-fill me-2"></i>10 TRIALS COMPLETE! MEAN LATENCY CALCULATED</h4>
+            <button type="submit" class="hud-btn w-50 py-3 fs-5">Proceed to EEG Acquisition Phase <i class="bi bi-arrow-right-circle ms-2"></i></button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let trial = 0;
+    let times = [];
+    let num1, num2, startTime;
+
+    // Web Audio API Sound Synthesizer (Cybernetic Audio Feedback)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playCyberSound(freq = 600, type = 'sine', duration = 0.08) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq / 2, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playSuccessSound() {
+        playCyberSound(880, 'triangle', 0.1);
+        setTimeout(() => playCyberSound(1200, 'sine', 0.12), 50);
+    }
+
+    function playErrorSound() {
+        playCyberSound(180, 'sawtooth', 0.2);
+    }
+
+    function nextTrial() {
+        if(trial < 10) {
+            num1 = Math.floor(Math.random() * 89) + 10;
+            num2 = Math.floor(Math.random() * 89) + 10;
+            while(num1 === num2) num2 = Math.floor(Math.random() * 89) + 10;
+            
+            document.getElementById('btn1').innerText = num1;
+            document.getElementById('btn2').innerText = num2;
+            document.getElementById('trial-counter').innerText = `Trial ${trial + 1} of 10`;
+            startTime = Date.now();
+        } else {
+            document.getElementById('game-area').style.display = 'none';
+            let avg = (times.reduce((a, b) => a + b, 0) / 10).toFixed(2);
+            document.getElementById('avg_rxn_input').value = avg;
+            document.getElementById('rxn-form').style.display = 'block';
+            playSuccessSound();
+        }
+    }
+
+    function processClick(selected) {
+        let elapsed = Date.now() - startTime;
+        let larger = Math.max(num1, num2);
+        
+        if(selected === larger) {
+            playCyberSound(750, 'sine', 0.08);
+        } else {
+            playErrorSound();
+            elapsed += 150; // Penalty latency
+        }
+
+        times.push(elapsed);
+        trial++;
+        nextTrial();
+    }
+
+    nextTrial();
+</script>
+{% endblock %}

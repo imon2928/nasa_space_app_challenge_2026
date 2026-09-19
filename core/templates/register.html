@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .login-card {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--primary-cyan);
+        border-radius: 16px;
+        padding: 35px;
+        box-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+    }
+    .cyber-input {
+        background: rgba(3, 7, 18, 0.9) !important;
+        border: 1px solid rgba(0, 240, 255, 0.4) !important;
+        color: #00F0FF !important;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.1rem;
+        padding: 12px 16px;
+        border-radius: 8px;
+    }
+    .cyber-input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+</style>
+
+<div class="row justify-content-center pt-3">
+    <div class="col-md-5">
+        <div class="login-card text-center">
+            <div class="mb-4">
+                <i class="bi bi-person-plus-fill text-neon fs-1 mb-2"></i>
+                <h4 class="text-neon fw-bold mb-1" style="font-family: 'Orbitron';">NEW ASTRONAUT REGISTRATION</h4>
+                <p class="text-white-50 fs-6">Create credentials for NeuroGuard clearance</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger bg-danger bg-opacity-20 border-danger text-danger text-start fs-6 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <input type="text" name="astronaut_id" class="form-control cyber-input" placeholder="Desired Astronaut ID (e.g. ASTRO-8821)" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <input type="text" name="full_name" class="form-control cyber-input" placeholder="Full Name" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <input type="password" name="password" class="form-control cyber-input" placeholder="Security Clearance Key" required>
+                </div>
+                <div class="mb-4">
+                    <input type="password" name="confirm_password" class="form-control cyber-input" placeholder="Confirm Clearance Key" required>
+                </div>
+                <button type="submit" class="hud-btn w-100 py-3 fs-6 mb-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>CREATE ACCOUNT & INITIALIZE
+                </button>
+            </form>
+
+            <div class="border-top border-secondary pt-3 mt-2">
+                <p class="text-white-50 mb-0">Already registered? <a href="{% url 'login' %}" class="text-neon text-decoration-none fw-bold">Login Here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

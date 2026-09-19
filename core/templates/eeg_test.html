@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .brain-scan-box {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--primary-cyan);
+        box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+        background: #030712;
+    }
+
+    /* সাইবার লেজার স্ক্যানার লাইন */
+    .laser-scan-line {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #00F0FF, #8A2BE2, transparent);
+        box-shadow: 0 0 20px #00F0FF;
+        animation: scanAnim 3s ease-in-out infinite alternate;
+        z-index: 4;
+    }
+
+    @keyframes scanAnim {
+        0% { top: 0%; }
+        100% { top: 96%; }
+    }
+
+    /* টেকনিক্যাল সাইবার গ্রিড ওভারলে */
+    .grid-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(3, 7, 18, 0.2), rgba(3, 7, 18, 0.5)),
+                    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 240, 255, 0.04) 3px, rgba(0, 240, 255, 0.04) 3px);
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    .hud-metrics-overlay {
+        position: absolute;
+        top: 12px;
+        left: 15px;
+        right: 15px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 5;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.75rem;
+        color: var(--primary-cyan);
+        pointer-events: none;
+    }
+
+    .status-text-bright {
+        color: #7DD3FC !important;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+    }
+</style>
+
+<div class="hud-card border-cyan text-center py-4">
+    <h4 class="text-neon mb-2 fw-bold fs-4">STEP 2: LIVE CORTICAL FREQUENCY STREAM ACQUISITION</h4>
+    <p class="status-text-bright mb-4">Real-time brainwave spectrum telemetry processing in progress...</p>
+    
+    <!-- লাইভ ইইজি ক্যানভাস ও স্ক্যানার উইন্ডো -->
+    <div class="brain-scan-box mb-4">
+        <div class="laser-scan-line"></div>
+        <div class="grid-overlay"></div>
+        
+        <!-- HUD টেক্সট স্ট্যাটাস -->
+        <div class="hud-metrics-overlay">
+            <span><i class="bi bi-activity"></i> SIGNAL: 100% STABLE</span>
+            <span>FREQ: 10.2 Hz (ALPHA)</span>
+        </div>
+
+        <!-- ডায়নামিক সাইবার ইইজি অ্যানিমেশন ক্যানভাস -->
+        <canvas id="eegCanvas" width="900" height="280" style="width:100%; height:280px; display:block;"></canvas>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <button id="scan-btn" type="submit" class="hud-btn py-3 fs-6">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>START FREQUENCY SPECTRUM ANALYSIS
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // সাইবারনেটিক রিয়েল-টাইম ইইজি ওয়েভ অ্যানিমেশন
+    const canvas = document.getElementById('eegCanvas');
+    const ctx = canvas.getContext('2d');
+    let step = 0;
+
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function drawEEG() {
+        // রিয়েল-টাইম ট্রেইল ইফেক্ট
+        ctx.fillStyle = 'rgba(3, 7, 18, 0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // প্রাইমারি সাইবার ওয়েভ
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#00F0FF';
+
+        for (let x = 0; x < canvas.width; x++) {
+            let y = canvas.height / 2 + 
+                    Math.sin((x + step) * 0.02) * 35 + 
+                    Math.cos((x + step) * 0.05) * 18 + 
+                    (Math.random() - 0.5) * 4;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // সেকেন্ডারি পার্পল ওয়েভ (হারমোনি)
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(138, 43, 226, 0.6)';
+
+        for (let x = 0; x < canvas.width; x++) {
+            let y = canvas.height / 2 + 
+                    Math.sin((x - step) * 0.015) * 45 + 
+                    Math.sin((x + step) * 0.04) * 12;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        step += 3;
+        requestAnimationFrame(drawEEG);
+    }
+
+    drawEEG();
+</script>
+{% endblock %}

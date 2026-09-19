@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .medical-metric-card {
+        background: rgba(8, 15, 30, 0.7);
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        border-radius: 8px;
+        padding: 16px;
+        height: 100%;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+
+    .medical-metric-card:hover {
+        border-color: var(--primary-cyan);
+        background: rgba(14, 28, 54, 0.8);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+    }
+
+    .metric-label {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: #7DD3FC !important;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .metric-value {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #F8FAFC !important;
+    }
+
+    .protocol-box {
+        background: rgba(6, 12, 24, 0.85);
+        border-left: 4px solid var(--primary-cyan);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        border-left-width: 4px;
+    }
+
+    .chart-container-box {
+        background: rgba(3, 7, 18, 0.8);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+    }
+</style>
+
+<!-- TOP MISSION READINESS BANNER -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="hud-card border-cyan d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="metric-label">MISSION READINESS STATUS</div>
+                <h4 class="text-white fw-bold mb-0" style="font-family:'Orbitron';">{{ readiness }}</h4>
+            </div>
+            <div class="text-end">
+                <div class="metric-label">NEURO HEALTH INDEX</div>
+                <div class="display-6 fw-bold text-neon" style="font-family:'Orbitron';">{{ neuro_score }} / 100</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- বাম পাশ: মেডিকেল রিপোর্ট, ব্রেইন চার্ট ও আসল ইইজি ডাটা -->
+    <div class="col-lg-8">
+        <div class="hud-card border-cyan">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="text-neon mb-0 fw-bold fs-5"><i class="bi bi-activity me-2"></i>NEUROGUARD DIAGNOSTIC REPORT</h4>
+                <span class="badge bg-black text-neon border border-cyan px-3 py-1" style="font-family:'Orbitron'; font-size:0.7rem;">
+                    BASELINE MAPPED
+                </span>
+            </div>
+            
+            <h5 class="text-white fw-bold mb-4 fs-6">{{ eeg.condition|default:"Cortical Assessment Completed" }}</h5>
+            
+            <!-- Dynamic Chart.js EEG Visualizations -->
+            <div class="row g-3 mb-4">
+                <!-- Donut Chart: Power Band Distribution -->
+                <div class="col-md-6">
+                    <div class="chart-container-box text-center">
+                        <div class="metric-label mb-3">EEG FREQUENCY POWER BANDS</div>
+                        <div style="height: 220px; position: relative;">
+                            <canvas id="eegBandChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Radar Chart: Cognitive Dimensions -->
+                <div class="col-md-6">
+                    <div class="chart-container-box text-center">
+                        <div class="metric-label mb-3">COGNITIVE FUNCTION METRICS</div>
+                        <div style="height: 220px; position: relative;">
+                            <canvas id="cognitiveRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- অরিজিনাল ক্লিনিক্যাল ইইজি ডাটা টেবিল (RAW METRICS) -->
+            <div class="chart-container-box mb-4">
+                <div class="metric-label mb-2 text-neon">⚡ CLINICAL EEG SIGNAL PARAMETERS (RAW METRICS)</div>
+                <div class="table-responsive">
+                    <table class="table table-borderless table-sm text-white mb-0">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(0, 240, 255, 0.3);">
+                                <th class="text-neon">Dominant Frequency</th>
+                                <th class="text-neon">Amplitude</th>
+                                <th class="text-neon">Montage Lead</th>
+                                <th class="text-neon">Beta/Theta Ratio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">{{ eeg.eeg_data.dominant_freq|default:"10.2 Hz (Alpha)" }}</td>
+                                <td class="fw-bold">{{ eeg.eeg_data.amplitude|default:"45 µV" }}</td>
+                                <td class="fw-bold">{{ eeg.eeg_data.montage|default:"10-20 Standard" }}</td>
+                                <td class="fw-bold text-neon">{{ eeg.eeg_data.beta_theta_ratio|default:"1.22" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ৭টি ক্লিনিক্যাল পারফরম্যান্স কার্ড -->
+            <h6 class="text-neon mb-3 text-uppercase tracking-wider fw-bold" style="font-size: 0.8rem;">NEURO-COGNITIVE PHYSIOLOGICAL PARAMETERS</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">BRAIN PERFORMANCE INDEX</div>
+                        <div class="metric-value text-neon">{{ eeg.brain_performance|default:"85% (Optimal Range)" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">SLEEP & CIRCADIAN STATUS</div>
+                        <div class="metric-value">{{ eeg.sleep_index|default:"Restful / Nominal REM Cycles" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">ATTENTION & FOCUS LEVEL</div>
+                        <div class="metric-value">{{ eeg.attention|default:"Sustained Stable Focus" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">SENSORY-MOTOR ADAPTATION</div>
+                        <div class="metric-value">{{ eeg.sensory_motor|default:"Normal Parietal Adaptation" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">WORKING MEMORY CAPACITY</div>
+                        <div class="metric-value">{{ eeg.memory|default:"Standard Working Memory (88% Efficiency)" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">DECISION PROCESSING SPEED</div>
+                        <div class="metric-value">{{ eeg.decision_speed|default:"Optimal Precision Latency" }}</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="medical-metric-card">
+                        <div class="metric-label">MOOD & AFFECTIVE STATE</div>
+                        <div class="metric-value text-warning">{{ eeg.mood|default:"Calm State & Balanced Affective Index" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ডান পাশ: পার্সোনাল বেসলাইন ও গাইডলাইন -->
+    <div class="col-lg-4">
+        <!-- Personal Baseline Analytics Card -->
+        <div class="hud-card mb-4">
+            <div class="metric-label">PERSONAL BASELINE ANALYTICS</div>
+            <div class="d-flex justify-content-between my-2">
+                <span class="text-white-50">Individual Baseline:</span>
+                <span class="fw-bold text-white">{{ baseline_rxn }} ms</span>
+            </div>
+            <div class="d-flex justify-content-between my-2">
+                <span class="text-white-50">Today's Measured Latency:</span>
+                <span class="fw-bold text-neon">{{ rxn }} ms</span>
+            </div>
+            <div class="d-flex justify-content-between border-top border-secondary pt-2 mt-2">
+                <span class="text-white-50">Baseline Deviation:</span>
+                {% if rxn_deviation > 10 %}
+                    <span class="fw-bold text-danger">+{{ rxn_deviation }}% (Slower)</span>
+                {% else %}
+                    <span class="fw-bold text-success">{{ rxn_deviation }}% (Nominal)</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- একশন প্রোটোকল ও বিস্তারিত মেডিকেল গাইডলাইন -->
+        <div class="hud-card">
+            <h5 class="text-neon mb-3 fw-bold fs-6">CLINICAL ACTION PROTOCOL</h5>
+            
+            <div class="mb-3">
+                <div class="alert alert-{{ readiness_class }} bg-{{ readiness_class }} bg-opacity-10 border-{{ readiness_class }} text-{{ readiness_class }} border-4 border-start mb-0 fw-bold">
+                    {{ readiness }}
+                </div>
+            </div>
+
+            <!-- বিস্তারিত করণীয় গাইডলাইন -->
+            <div class="protocol-box my-3">
+                <div class="metric-label text-neon mb-2">RECOMMENDED MEDICAL STEPS:</div>
+                <div class="text-light" style="font-size: 0.9rem; line-height: 1.7; font-weight: 500;">
+                    {{ eeg.guideline|default:"1. Initiate 5-minute guided autonomic breathing exercise.\n2. Dim cabin lighting in crew quarters by 20% to reduce sensory overload.\n3. Postpone non-essential complex orbital calculations."|linebreaksbr }}
+                </div>
+            </div>
+
+            <a href="{% url 'reaction_test' %}" class="hud-btn text-center d-block mt-4">Start New Test Session</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Context-driven data parsing from Django context
+    const alphaVal = parseFloat("{{ eeg.eeg_data.alpha_power|default:'48%' }}");
+    const betaVal = parseFloat("{{ eeg.eeg_data.beta_power|default:'22%' }}");
+    const thetaVal = parseFloat("{{ eeg.eeg_data.theta_power|default:'18%' }}");
+    const deltaVal = parseFloat("{{ eeg.eeg_data.delta_power|default:'12%' }}");
+
+    // 1. Chart.js Donut Chart: EEG Power Bands
+    const ctxBand = document.getElementById('eegBandChart').getContext('2d');
+    new Chart(ctxBand, {
+        type: 'doughnut',
+        data: {
+            labels: ['Alpha Wave', 'Beta Wave', 'Theta Wave', 'Delta Wave'],
+            datasets: [{
+                data: [alphaVal, betaVal, thetaVal, deltaVal],
+                backgroundColor: ['#00F0FF', '#8A2BE2', '#FF007F', '#FFB703'],
+                borderColor: '#030712',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#F1F5F9', font: { family: 'Rajdhani', size: 11 } }
+                }
+            }
+        }
+    });
+
+    // 2. Chart.js Radar Chart: Cognitive Performance Overview
+    const ctxRadar = document.getElementById('cognitiveRadarChart').getContext('2d');
+    new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: ['Focus', 'Memory', 'Speed', 'Stability', 'Arousal'],
+            datasets: [{
+                label: 'Score Metric',
+                data: [{{ neuro_score }}, 88, Math.max(20, 100 - ({{ rxn_deviation }} * 2)), 82, 90],
+                backgroundColor: 'rgba(0, 240, 255, 0.25)',
+                borderColor: '#00F0FF',
+                pointBackgroundColor: '#8A2BE2',
+                pointBorderColor: '#FFF'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    pointLabels: { color: '#7DD3FC', font: { family: 'Rajdhani', size: 10 } },
+                    ticks: { display: false, max: 100 }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}
