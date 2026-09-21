@@ -1,46 +1,113 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="mb-4">
-    <h3 class="font-monospace fw-bold text-white mb-0"><i class="bi bi-bar-chart-line-fill text-info me-2"></i>RISK ASSESSMENT</h3>
-    <small class="text-secondary">AI Predictive Risk Analysis for Deep Space Missions</small>
+<div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h3 class="font-monospace fw-bold text-white mb-0">
+            <i class="bi bi-shield-check text-info me-2"></i>RISK ASSESSMENT & PREDICTIONS
+        </h3>
+        <small class="text-secondary">AI Predictive Analysis Based on Live EEG Spectrum Data</small>
+    </div>
+    <a href="{% url 'eeg_test' %}" class="btn btn-outline-info font-monospace btn-sm">
+        <i class="bi bi-arrow-repeat me-1"></i> RE-RUN EEG TEST
+    </a>
 </div>
 
+{% if not has_tested %}
+<!-- ইইজি টেস্ট না দেওয়া থাকলে মেসেজ -->
+<div class="hud-card text-center py-5 my-4">
+    <i class="bi bi-shield-exclamation text-warning display-1 mb-3"></i>
+    <h4 class="font-monospace text-white fw-bold">NO EEG SPECTRUM DATA EVALUATED</h4>
+    <p class="text-secondary col-md-6 mx-auto mb-4">Risk assessments are generated based on real-time brain wave spectrum analysis. Please initiate an EEG test first.</p>
+    <a href="{% url 'eeg_test' %}" class="btn btn-info font-monospace px-4 py-2 fw-bold" style="background:#00e5ff; border:none; color:#030812;">
+        <i class="bi bi-play-circle-fill me-2"></i> INITIATE EEG SPECTRUM TEST
+    </a>
+</div>
+
+{% else %}
+
+<!-- ইইজি রিপোর্টের উপর ভিত্তি করে রিস্ক ডাটা -->
 <div class="row g-3">
-    <div class="col-md-6">
-        <div class="hud-card">
-            <span class="font-monospace text-info fw-bold d-block mb-3">MISSION HAZARD PREDICTIONS</span>
+    <!-- ১. প্রধান রিস্ক ম্যাট্রিক্স -->
+    <div class="col-lg-6">
+        <div class="hud-card h-100">
+            <span class="font-monospace text-info fw-bold d-block mb-3 text-uppercase" style="letter-spacing: 1px;">
+                <i class="bi bi-bar-chart-line me-1"></i> EEG-BASED HAZARD EVALUATION
+            </span>
             
+            <!-- Neuro-Fatigue Risk -->
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
-                <span class="text-light font-monospace">Neuro-Fatigue Index</span>
-                <span class="badge bg-success font-monospace px-3 py-2">{{ neuro_fatigue_risk }}</span>
+                <div>
+                    <span class="text-light font-monospace d-block">Neuro-Fatigue Risk</span>
+                    <small class="text-secondary" style="font-size:0.7rem;">Evaluated from Theta/Beta Ratio</small>
+                </div>
+                <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 border border-success">
+                    {{ eeg.fatigue_risk|default:"Low" }}
+                </span>
             </div>
+
+            <!-- Cognitive Decline Risk -->
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
-                <span class="text-light font-monospace">Cognitive Impairment Risk</span>
-                <span class="badge bg-success font-monospace px-3 py-2">{{ cognitive_decline }}</span>
+                <div>
+                    <span class="text-light font-monospace d-block">Cognitive Decline Risk</span>
+                    <small class="text-secondary" style="font-size:0.7rem;">Derived from Alpha Spectrum Power</small>
+                </div>
+                <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 border border-success">
+                    {{ eeg.cognitive_risk|default:"Low" }}
+                </span>
             </div>
+
+            <!-- Microgravity Adaptation -->
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
-                <span class="text-light font-monospace">Microgravity Hypoxia Risk</span>
-                <span class="badge bg-success font-monospace px-3 py-2">{{ hypoxia_risk }}</span>
+                <div>
+                    <span class="text-light font-monospace d-block">Sensory-Motor Stress</span>
+                    <small class="text-secondary" style="font-size:0.7rem;">Parietal Lobe Sensor Sync</small>
+                </div>
+                <span class="badge bg-info-subtle text-info font-monospace px-3 py-2 border border-info">
+                    NORMAL
+                </span>
             </div>
+
+            <!-- EVA Readiness -->
             <div class="d-flex justify-content-between align-items-center">
-                <span class="text-light font-monospace">Space Activity Readiness</span>
-                <span class="badge bg-info text-dark font-monospace px-3 py-2">{{ eva_status }}</span>
+                <div>
+                    <span class="text-light font-monospace d-block">EVA / Spacewalk Readiness</span>
+                    <small class="text-secondary" style="font-size:0.7rem;">Real-time Spacewalk clearance</small>
+                </div>
+                <span class="badge bg-success font-monospace px-3 py-2">
+                    {{ eeg.eva_readiness|default:"READY" }}
+                </span>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
+    <!-- ২. এআই প্রোটোকল ও রিকমেন্ডেশন -->
+    <div class="col-lg-6">
         <div class="hud-card h-100 d-flex flex-column justify-content-between">
             <div>
-                <span class="font-monospace text-warning fw-bold d-block mb-2"><i class="bi bi-shield-exclamation me-1"></i> SAFETY PROTOCOL</span>
-                <p class="text-secondary small">
-                    All physiological risk factors are currently well within permissible NASA mission parameters. Continuous monitoring remains active.
-                </p>
+                <span class="font-monospace text-warning fw-bold d-block mb-3 text-uppercase" style="letter-spacing: 1px;">
+                    <i class="bi bi-lightbulb me-1"></i> AI SAFETY RECOMMENDATIONS
+                </span>
+                
+                <div class="p-3 rounded mb-3" style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2);">
+                    <div class="text-white fw-bold font-monospace mb-1" style="font-size:0.85rem;">EVALUATION SUMMARY:</div>
+                    <p class="text-light small mb-0" style="line-height:1.5;">
+                        {{ eeg.recommendation|default:"Your current EEG spectral power distribution indicates stable neurological status. No immediate fatigue hazards detected." }}
+                    </p>
+                </div>
+
+                <div class="font-monospace text-secondary small">
+                    <div class="mb-1"><i class="bi bi-check2-circle text-success me-1"></i> Alpha Wave Stability: <span class="text-white">Normal</span></div>
+                    <div class="mb-1"><i class="bi bi-check2-circle text-success me-1"></i> Cortical Arousal Index: <span class="text-white">Optimal</span></div>
+                </div>
             </div>
-            <div class="p-3 rounded border border-success bg-black bg-opacity-50 text-success font-monospace text-center">
-                ● STATUS: ALL SYSTEMS NOMINAL
+
+            <div class="p-3 rounded border border-success bg-black bg-opacity-50 text-success font-monospace text-center mt-3">
+                ● MISSION STATUS: SAFE FOR OPERATIONS
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

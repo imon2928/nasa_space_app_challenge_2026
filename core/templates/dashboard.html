@@ -27,7 +27,6 @@
         color: #ffffff;
     }
 
-    /* সাব-টাইটেল বা বিবরণীর টেক্সট স্পষ্টভাবে দেখানোর জন্য স্টাইল */
     .metric-desc {
         color: #CBD5E1 !important;
         font-size: 0.72rem;
@@ -43,34 +42,62 @@
         overflow: hidden;
     }
 
-    /* 3D BRAIN MODEL SECTION */
+    /* 3D BRAIN & ASTRONAUT HUD CENTER BOX */
     .brain-center-box {
-        background: radial-gradient(circle at center, rgba(0, 229, 255, 0.15) 0%, rgba(3, 8, 18, 0.95) 75%);
+        background: radial-gradient(circle at center, rgba(0, 229, 255, 0.12) 0%, rgba(3, 8, 18, 0.95) 80%);
         border: 1px solid rgba(0, 229, 255, 0.25);
-        border-radius: 10px;
-        padding: 12px;
+        border-radius: 12px;
+        padding: 16px;
         position: relative;
         text-align: center;
-        min-height: 280px;
+        height: 100%;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .brain-hud-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        max-width: 380px;
+        margin: auto;
     }
 
     .brain-img-3d {
-        max-height: 280px;
         width: 100%;
+        height: auto;
+        max-height: 350px;
         object-fit: contain;
-        filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.4));
+        filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.3));
     }
 
-    .lobe-tag {
+   /* NEON LOBE TAGS (COMPACT & MATCHING REFERENCE UI) */
+    .lobe-tag-hud {
         position: absolute;
         font-family: 'Orbitron', sans-serif;
-        font-size: 0.55rem;
-        color: #00e5ff;
-        background: rgba(3, 8, 18, 0.85);
-        border: 1px solid #00e5ff;
-        padding: 2px 5px;
+        font-size: 0.58rem;
+        color: #ffffff;
+        background: rgba(3, 8, 18, 0.90);
+        border: 1px solid rgba(0, 229, 255, 0.6);
+        padding: 4px 6px;
         border-radius: 4px;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        backdrop-filter: blur(6px);
+        white-space: nowrap;
+        pointer-events: none;
+        text-align: left;
+        max-width: 170px;
+        z-index: 5;
     }
+
+    /* PERFECT NON-OVERLAPPING POSITIONS */
+    .tag-frontal { top: 12%; left: -8%; }
+    .tag-parietal { top: 5%; right: -8%; }
+    .tag-temporal { top: 62%; left: -6%; }
+    .tag-occipital { top: 48%; right: -8%; }
+
 
     .quote-box {
         background: rgba(6, 14, 26, 0.9);
@@ -80,8 +107,8 @@
     }
 
     /* BOTTOM HUD CARDS */
-    .bottom-hud-card {
-        background: rgba(6, 14, 26, 0.85);
+    .hud-box-card {
+        background: rgba(8, 16, 28, 0.85);
         border: 1px solid rgba(0, 229, 255, 0.25);
         border-radius: 10px;
         padding: 16px;
@@ -89,7 +116,7 @@
         backdrop-filter: blur(12px);
     }
 
-    .purple-hud-card {
+    .purple-hud-box {
         background: rgba(18, 14, 36, 0.85);
         border: 1px solid rgba(168, 85, 247, 0.5);
         border-radius: 10px;
@@ -98,15 +125,18 @@
         backdrop-filter: blur(12px);
     }
 
-    .bottom-title {
+    .hud-box-title {
         font-family: 'Orbitron', sans-serif;
-        font-size: 0.78rem;
+        font-size: 0.8rem;
         letter-spacing: 1px;
         color: #00e5ff;
         font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
-    .risk-row {
+    .risk-item-box {
         background: rgba(3, 8, 18, 0.6);
         border: 1px solid rgba(0, 229, 255, 0.15);
         border-radius: 6px;
@@ -114,7 +144,7 @@
         margin-bottom: 8px;
     }
 
-    .risk-progress-bg {
+    .progress-bar-bg {
         width: 80px;
         height: 8px;
         background: rgba(255, 255, 255, 0.1);
@@ -122,21 +152,21 @@
         overflow: hidden;
     }
 
-    .risk-progress-fill {
+    .progress-bar-fill {
         height: 100%;
         background: #10b981;
         box-shadow: 0 0 8px #10b981;
         border-radius: 10px;
     }
 
-    .recommendation-inner-box {
+    .recommendation-inner-card {
         background: rgba(10, 20, 38, 0.7);
         border: 1px solid rgba(0, 229, 255, 0.15);
         border-radius: 8px;
         padding: 12px;
     }
 
-    .btn-purple-action {
+    .btn-purple-full {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: #ffffff !important;
         font-family: 'Orbitron', sans-serif;
@@ -147,7 +177,7 @@
         border-radius: 6px;
         width: 100%;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
         transition: all 0.3s ease;
         box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
         text-decoration: none;
@@ -155,24 +185,18 @@
         text-align: center;
     }
 
-    .btn-purple-action:hover {
+    .btn-purple-full:hover {
         box-shadow: 0 0 25px rgba(139, 92, 246, 0.8);
         transform: translateY(-1px);
     }
 
-    /* MOBILE RESPONSIVE MEDIA QUERIES */
     @media (max-width: 767px) {
-        .lobe-tag {
+        .lobe-tag-hud {
             font-size: 0.5rem;
-            padding: 1px 3px;
+            padding: 2px 4px;
         }
-        
         .brain-img-3d {
-            max-height: 200px;
-        }
-
-        .metric-score {
-            font-size: 1rem;
+            max-height: 250px;
         }
     }
 </style>
@@ -197,13 +221,13 @@
         <span class="text-secondary small">Your brain. Our mission.</span>
     </div>
     <div>
-        <span class="badge bg-black text-success border border-success px-2 py-1 font-monospace" style="font-size:0.7rem;">
-            STATUS: ● STABLE
+        <span class="badge bg-black {% if eeg.fatigue_risk == 'High' %}text-danger border-danger{% elif eeg.fatigue_risk == 'Moderate' %}text-warning border-warning{% else %}text-success border-success{% endif %} px-2 py-1 font-monospace" style="font-size:0.7rem;">
+            STATUS: ● {{ eeg.eva_readiness|default:"STABLE"|upper }}
         </span>
     </div>
 </div>
 
-<!-- মোবাইল-ফ্রেন্ডলি রেস্পন্সিভ গ্রিড -->
+<!-- ৪ কলাম রেস্পন্সিভ গ্রিড -->
 <div class="row g-2">
     <!-- কলাম ১: ৪টি কগনিটিভ স্কোর (বাম পাশ) -->
     <div class="col-12 col-sm-6 col-xl-3">
@@ -256,24 +280,56 @@
         </div>
     </div>
 
-    <!-- কলাম ২: ৩D ব্রেইন অ্যাক্টিভিটি ম্যাপ (মাঝখানে) -->
-    <div class="col-12 col-xl-4 my-2 my-xl-0">
-        <div class="brain-center-box d-flex flex-column justify-content-between h-100">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="font-monospace text-white fw-bold" style="font-size: 0.75rem;">BRAIN ACTIVITY (LIVE EEG)</span>
-                <span class="badge bg-black text-success border border-success font-monospace" style="font-size: 0.6rem;">● LIVE</span>
+    <!-- কলাম ২: ৩D ব্রেইন অ্যাক্টিভিটি ম্যাপ (শর্ট ও ক্লিন ট্যাবস) -->
+<div class="col-12 col-xl-4 my-2 my-xl-0">
+    <div class="brain-center-box">
+        <!-- HEADER TITLE & LIVE BADGE -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="font-monospace text-white fw-bold" style="font-size: 0.85rem; letter-spacing: 1px;">
+                BRAIN ACTIVITY (LIVE EEG)
+            </span>
+            <span class="badge bg-black text-success border border-success font-monospace" style="font-size: 0.65rem;">
+                ● LIVE
+            </span>
+        </div>
+        
+        <!-- ASTRONAUT 3D BRAIN HUD DISPLAY -->
+        <div class="brain-hud-wrapper my-auto">
+            <img src="{% static 'images/brain_hud.png' %}" 
+                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=800&q=80';" 
+                 alt="Brain Activity EEG" class="brain-img-3d rounded">
+            
+            <!-- 4 SHORT & CLEAN NEON LOBE TAGS -->
+            <div class="lobe-tag-hud tag-frontal">
+                <span class="text-white fw-bold">Frontal</span><br>
+                <small class="text-info font-monospace" style="font-size:0.55rem;">
+                    {{ eeg.focus_score|default:79 }}/100 • Active
+                </small>
             </div>
             
-            <div class="position-relative text-center my-auto">
-                <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=800&q=80" alt="Brain Activity EEG" class="brain-img-3d rounded">
-                
-                <div class="lobe-tag" style="top: 20%; left: 5%;">Frontal (Focus)</div>
-                <div class="lobe-tag" style="top: 15%; right: 5%;">Parietal (Sensory)</div>
-                <div class="lobe-tag" style="bottom: 20%; left: 10%;">Temporal (Memory)</div>
-                <div class="lobe-tag" style="bottom: 15%; right: 5%;">Occipital (Visual)</div>
+            <div class="lobe-tag-hud tag-parietal">
+                <span class="text-white fw-bold">Parietal</span><br>
+                <small class="text-info font-monospace" style="font-size:0.55rem;">
+                    {{ eeg.sensory_score|default:84 }}/100 • Normal
+                </small>
+            </div>
+            
+            <div class="lobe-tag-hud tag-temporal">
+                <span class="text-white fw-bold">Temporal</span><br>
+                <small class="text-info font-monospace" style="font-size:0.55rem;">
+                    {{ eeg.memory_score|default:96 }}/100 • Optimal
+                </small>
+            </div>
+            
+            <div class="lobe-tag-hud tag-occipital">
+                <span class="text-white fw-bold">Occipital</span><br>
+                <small class="text-info font-monospace" style="font-size:0.55rem;">
+                    Alpha: {{ eeg.alpha_uv|default:32 }} µV
+                </small>
             </div>
         </div>
     </div>
+</div>
 
     <!-- কলাম ৩: ৪টি কগনিটিভ স্কোর (ডান পাশ) -->
     <div class="col-12 col-sm-6 col-xl-3">
@@ -380,12 +436,13 @@
 
 <!-- বটম সেকশন: EEG WAVE ACTIVITY, PREDICTION & RISK, RECOMMENDED ACTION -->
 <div class="row g-3 mt-1">
-    <!-- ১. EEG WAVE ACTIVITY CHART & VALUES -->
+    
+    <!-- ১. EEG WAVE ACTIVITY BOX -->
     <div class="col-12 col-lg-5">
-        <div class="bottom-hud-card d-flex flex-column justify-content-between">
+        <div class="hud-box-card d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="bottom-title"><i class="bi bi-aspect-ratio me-1"></i> EEG WAVE ACTIVITY</span>
+                    <span class="hud-box-title"><i class="bi bi-aspect-ratio"></i> EEG WAVE ACTIVITY</span>
                     <span class="font-monospace text-secondary" style="font-size: 0.65rem; letter-spacing:0.8px;">REAL-TIME VALUES</span>
                 </div>
                 
@@ -428,61 +485,61 @@
         </div>
     </div>
 
-    <!-- ২. PREDICTION & RISK -->
+    <!-- ২. PREDICTION & RISK BOX -->
     <div class="col-12 col-lg-3">
-        <div class="bottom-hud-card">
-            <span class="bottom-title d-block mb-3"><i class="bi bi-shield-check me-1"></i> PREDICTION & RISK</span>
+        <div class="hud-box-card">
+            <span class="hud-box-title mb-3"><i class="bi bi-shield-check"></i> PREDICTION & RISK</span>
             
-            <div class="risk-row d-flex justify-content-between align-items-center">
+            <div class="risk-item-box d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-record-circle text-info" style="font-size:0.75rem;"></i>
                     <span class="font-monospace text-light" style="font-size:0.72rem;">Neuro-Fatigue Risk</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <div class="risk-progress-bg">
-                        <div class="risk-progress-fill" style="width: 45%;"></div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% if eeg.fatigue_risk == 'High' %}90%{% elif eeg.fatigue_risk == 'Moderate' %}50%{% else %}25%{% endif %};"></div>
                     </div>
-                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">Low</span>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">{{ eeg.fatigue_risk|default:"Low" }}</span>
                 </div>
             </div>
 
-            <div class="risk-row d-flex justify-content-between align-items-center">
+            <div class="risk-item-box d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-record-circle text-info" style="font-size:0.75rem;"></i>
                     <span class="font-monospace text-light" style="font-size:0.72rem;">Cognitive Decline Risk</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <div class="risk-progress-bg">
-                        <div class="risk-progress-fill" style="width: 30%;"></div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% if eeg.cognitive_risk == 'Moderate' %}60%{% else %}20%{% endif %};"></div>
                     </div>
-                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">Low</span>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">{{ eeg.cognitive_risk|default:"Low" }}</span>
                 </div>
             </div>
 
-            <div class="risk-row d-flex justify-content-between align-items-center mb-0">
+            <div class="risk-item-box d-flex justify-content-between align-items-center mb-0">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-record-circle text-danger" style="font-size:0.75rem;"></i>
                     <span class="font-monospace text-light" style="font-size:0.72rem;">EVA Readiness</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <div class="risk-progress-bg">
-                        <div class="risk-progress-fill" style="width: 80%;"></div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% if eeg.eva_readiness == 'Ready' or eeg.eva_readiness == 'Peak Clearance (EVA Ready)' %}85%{% else %}30%{% endif %};"></div>
                     </div>
-                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">Ready</span>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">{{ eeg.eva_readiness|default:"Ready" }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ৩. RECOMMENDED ACTION -->
+    <!-- ৩. RECOMMENDED ACTION BOX -->
     <div class="col-12 col-lg-4">
-        <div class="purple-hud-card d-flex flex-column justify-content-between">
+        <div class="purple-hud-box d-flex flex-column justify-content-between">
             <div>
-                <span class="bottom-title d-block mb-3" style="color:#c084fc !important;">
-                    <i class="bi bi-lightbulb me-1"></i> RECOMMENDED ACTION
+                <span class="hud-box-title mb-3" style="color:#c084fc !important;">
+                    <i class="bi bi-lightbulb"></i> RECOMMENDED ACTION
                 </span>
 
-                <div class="recommendation-inner-box d-flex align-items-center justify-content-between gap-3 mb-2">
+                <div class="recommendation-inner-card d-flex align-items-center justify-content-between gap-3 mb-2">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 30px; height: 30px; background: #10b981; color: #000; font-size: 1rem;">
                             <i class="bi bi-check-lg"></i>
@@ -498,11 +555,12 @@
                 </div>
             </div>
 
-            <a href="{% url 'eeg_test' %}" class="btn-purple-action">
+            <a href="{% url 'recommendations' %}" class="btn-purple-full">
                 VIEW DETAILED RECOMMENDATIONS
             </a>
         </div>
     </div>
+
 </div>
 
 <!-- FOOTER TAGLINE -->
@@ -523,56 +581,18 @@
         data: {
             labels: ['1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s'],
             datasets: [
-                {
-                    label: 'Delta',
-                    data: [12, 18, 10, 15, 12, 14, 11, 13],
-                    borderColor: '#00e5ff',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    tension: 0.4
-                },
-                {
-                    label: 'Theta',
-                    data: [18, 14, 22, 16, 20, 15, 19, 18],
-                    borderColor: '#a855f7',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    tension: 0.4
-                },
-                {
-                    label: 'Alpha',
-                    data: [32, 28, 38, 30, 42, 35, 31, 33],
-                    borderColor: '#10b981',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.4
-                },
-                {
-                    label: 'Beta',
-                    data: [24, 20, 26, 22, 28, 21, 25, 24],
-                    borderColor: '#f59e0b',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    tension: 0.4
-                },
-                {
-                    label: 'Gamma',
-                    data: [10, 15, 8, 12, 9, 14, 10, 11],
-                    borderColor: '#e11d48',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    tension: 0.4
-                }
+                { label: 'Delta', data: [12, 18, 10, 15, 12, 14, 11, 13], borderColor: '#00e5ff', borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
+                { label: 'Theta', data: [18, 14, 22, 16, 20, 15, 19, 18], borderColor: '#a855f7', borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
+                { label: 'Alpha', data: [32, 28, 38, 30, 42, 35, 31, 33], borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.4 },
+                { label: 'Beta', data: [24, 20, 26, 22, 28, 21, 25, 24], borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
+                { label: 'Gamma', data: [10, 15, 8, 12, 9, 14, 10, 11], borderColor: '#e11d48', borderWidth: 1.5, pointRadius: 0, tension: 0.4 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: {
-                x: { display: false },
-                y: { display: false }
-            }
+            scales: { x: { display: false }, y: { display: false } }
         }
     });
 </script>

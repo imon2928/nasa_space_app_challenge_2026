@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .recom-card {
+        background: rgba(12, 20, 36, 0.85);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        height: 100%;
+        backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+    }
+    .recom-card:hover {
+        border-color: rgba(0, 229, 255, 0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 229, 255, 0.15);
+    }
+    .nasa-badge {
+        background: rgba(6, 182, 212, 0.15);
+        border: 1px solid #06b6d4;
+        color: #00e5ff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.65rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    .protocol-step {
+        background: rgba(3, 8, 18, 0.6);
+        border-left: 3px solid #10b981;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border-radius: 0 6px 6px 0;
+    }
+</style>
+
+<!-- HEADER SECTION -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="font-monospace fw-bold text-white mb-0">
+            <i class="bi bi-lightbulb-fill text-warning me-2"></i>NEURO-HEALTH COUNTERMEASURES
+        </h3>
+        <small class="text-secondary">NASA HRP & Neuroscience Open Data Prescriptions</small>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-black text-info border border-info px-3 py-2 font-monospace">
+            EVALUATED STATE: {{ eeg.dominant_freq|default:"10.2 Hz (Alpha)" }}
+        </span>
+    </div>
+</div>
+
+<!-- CURRENT CONDITION SUMMARY HUD -->
+<div class="hud-card mb-4" style="border-color: rgba(168, 85, 247, 0.5);">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <span class="text-uppercase font-monospace text-warning fw-bold d-block mb-1" style="font-size: 0.75rem;">
+                ● ACTIVE BRAINWAVE DIAGNOSIS
+            </span>
+            <h4 class="text-white font-monospace fw-bold mb-2">{{ eeg.condition|default:"Alpha Synchrony State" }}</h4>
+            <p class="text-light small mb-0" style="line-height: 1.5;">
+                {{ eeg.recommendation }}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <div class="d-inline-block p-3 rounded text-center" style="background: rgba(3, 8, 18, 0.8); border: 1px solid rgba(0, 229, 255, 0.3);">
+                <small class="text-secondary d-block font-monospace" style="font-size: 0.65rem;">NEURO-HEALTH SCORE</small>
+                <div class="display-6 font-monospace text-success fw-boldlh-1 mb-0">{{ eeg.neuro_score|default:84 }}</div>
+                <small class="text-success font-monospace" style="font-size:0.7rem;">STATUS: NOMINAL</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NASA & NEUROSCIENCE COUNTERMEASURE CARDS GRID -->
+<div class="row g-3">
+
+    <!-- 1. NEURO-STIMULATION & SOUND PROTOCOL -->
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="recom-card d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <i class="bi bi-headphones text-info fs-3"></i>
+                    <span class="nasa-badge">NASA HRP-001</span>
+                </div>
+                <h5 class="text-white font-monospace fw-bold">Binaural Neuro-Stimulation</h5>
+                <p class="text-secondary small mb-3">Auditory frequencyentrainment to force target neural oscillations during fatigue or hyper-arousal.</p>
+                
+                <div class="protocol-step">
+                    <div class="text-white fw-bold font-monospace" style="font-size:0.75rem;">Prescription Protocol:</div>
+                    <small class="text-secondary d-block" style="font-size:0.7rem;">Apply 15-20 min 10Hz Alpha-wave binaural beat audio before EVA shifts.</small>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-secondary text-end">
+                <span class="text-info font-monospace" style="font-size:0.7rem;"><i class="bi bi-play-circle me-1"></i> Audio Generator Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CIRCADIAN LIGHTING CONTROL -->
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="recom-card d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <i class="bi bi-sun-fill text-warning fs-3"></i>
+                    <span class="nasa-badge">ISS LIGHT PROTOCOL</span>
+                </div>
+                <h5 class="text-white font-monospace fw-bold">Dynamic Spectrum Lighting</h5>
+                <p class="text-secondary small mb-3">Regulation of melatonin suppression via Solid-State Lighting Assemblies (SSLA) aboard spacecraft.</p>
+                
+                <div class="protocol-step" style="border-left-color: #f59e0b;">
+                    <div class="text-white fw-bold font-monospace" style="font-size:0.75rem;">Prescription Protocol:</div>
+                    <small class="text-secondary d-block" style="font-size:0.7rem;">Shift quarter lighting to 460nm Blue-enriched light (06:00-12:00 UTC) to reduce Theta drowsiness.</small>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-secondary text-end">
+                <span class="text-warning font-monospace" style="font-size:0.7rem;"><i class="bi bi-sliders me-1"></i> SSLA Synced</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SENSORIMOTOR RE-CALIBRATION -->
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="recom-card d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <i class="bi bi-arrows-move text-purple fs-3" style="color:#a855f7;"></i>
+                    <span class="nasa-badge">NASA SENSORIMOTOR</span>
+                </div>
+                <h5 class="text-white font-monospace fw-bold">Microgravity Proprioception</h5>
+                <p class="text-secondary small mb-3">Countermeasures against vestibular disorientation and delayed sensory-motor parietal adaptation.</p>
+                
+                <div class="protocol-step" style="border-left-color: #a855f7;">
+                    <div class="text-white fw-bold font-monospace" style="font-size:0.75rem;">Prescription Protocol:</div>
+                    <small class="text-secondary d-block" style="font-size:0.7rem;">Perform 10-minute active head-eye coordination tracking and resistive ankle tread press.</small>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-secondary text-end">
+                <span class="text-purple font-monospace" style="font-size:0.7rem; color:#a855f7;"><i class="bi bi-check-all me-1"></i> Routine Active</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. NUTRITIONAL NEURO-PROTECTION -->
+    <div class="col-12 col-md-6 col-xl-6">
+        <div class="recom-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <i class="bi bi-capsule text-danger fs-3"></i>
+                <span class="nasa-badge">NASA NUTRITION DATA</span>
+            </div>
+            <h5 class="text-white font-monospace fw-bold">Targeted Neuro-Nutrients</h5>
+            <p class="text-secondary small mb-3">Dietary supplementation formulated to maintain neurotransmitter synthesis and reduce cosmic radiation neuro-inflammation.</p>
+            
+            <div class="row g-2 font-monospace" style="font-size:0.72rem;">
+                <div class="col-md-6">
+                    <div class="p-2 rounded border border-secondary bg-black bg-opacity-40">
+                        <span class="text-info d-block fw-bold">L-Theanine + Tryptophan</span>
+                        <small class="text-secondary">Promotes Alpha wave synchrony & reduces high-beta stress.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-2 rounded border border-secondary bg-black bg-opacity-40">
+                        <span class="text-success d-block fw-bold">Omega-3 DHA / EPA</span>
+                        <small class="text-secondary">Protects hippocampal neural plasticity in zero-gravity.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. AUTONOMIC RESPIRATORY PACING -->
+    <div class="col-12 col-md-12 col-xl-6">
+        <div class="recom-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <i class="bi bi-wind text-success fs-3"></i>
+                <span class="nasa-badge">BIOFEEDBACK PROTOCOL</span>
+            </div>
+            <h5 class="text-white font-monospace fw-bold">Vagal Nerve Parasympathetic Reset</h5>
+            <p class="text-secondary small mb-2">Controlled respiratory pacing designed to lower high-frequency Beta spikes and restore parasympathetic dominance.</p>
+
+            <div class="p-3 rounded border border-success bg-black bg-opacity-50 text-center my-2">
+                <span class="font-monospace text-success fw-bold d-block mb-1" style="font-size:0.85rem;">4 - 7 - 8 BREATHING PACER</span>
+                <small class="text-light d-block" style="font-size:0.72rem;">Inhale (4s) ➔ Hold (7s) ➔ Exhale (8s) for 5 cycles</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER BACK TO DASHBOARD -->
+<div class="mt-4 pt-3 border-top border-secondary text-center">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-info font-monospace px-5 py-2">
+        <i class="bi bi-arrow-left me-2"></i> RETURN TO MAIN DASHBOARD
+    </a>
+</div>
+{% endblock %}
