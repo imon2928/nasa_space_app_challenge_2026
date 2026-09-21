@@ -1,97 +1,183 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="hud-card border-cyan">
-    <h4 class="text-neon mb-2 fw-bold">STEP 1: PSYCHOMOTOR DECISION LATENCY TEST</h4>
-    <p class="text-white-50">Target: Select the <strong class="text-neon">LARGER</strong> numerical value immediately upon appearance. Exactly 10 trials required.</p>
+<style>
+    .pvt-container {
+        background: rgba(10, 20, 32, 0.75);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    }
     
-    <div id="game-area" class="text-center py-4">
-        <h5 id="trial-counter" class="text-neon mb-4 fw-bold" style="font-family: 'Orbitron'; font-size: 1.1rem;">Trial 1 of 10</h5>
-        <div class="d-flex justify-content-center gap-4 mb-4">
-            <button id="btn1" class="hud-btn btn-lg px-5 py-4 fs-1 fw-bold style-num-btn" onclick="processClick(num1)"></button>
-            <button id="btn2" class="hud-btn btn-lg px-5 py-4 fs-1 fw-bold style-num-btn" onclick="processClick(num2)"></button>
+    .pvt-screen {
+        background: #000000;
+        border: 2px solid rgba(16, 185, 129, 0.4);
+        border-radius: 8px;
+        height: 280px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .pvt-counter {
+        font-family: 'Orbitron', monospace;
+        font-size: 4rem;
+        color: #10B981;
+        text-shadow: 0 0 20px #10B981;
+    }
+
+    .pvt-warning {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8rem;
+        color: #EF4444;
+        text-shadow: 0 0 15px #EF4444;
+    }
+</style>
+
+<div class="pvt-container my-3">
+    <!-- STEP 1: NASA ISS SUBJECTIVE QUESTIONNAIRE -->
+    <div id="survey-section">
+        <h4 class="text-neuro-green mb-3 fw-bold" style="font-family:'Orbitron';">NASA REACTION SELF-TEST: PRE-TEST ASSESSMENT</h4>
+        <p class="text-light opacity-75 mb-4">Official ISS Flight Protocol: Enter subjective physiological parameters prior to PVT acquisition.</p>
+        
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="text-neuro-green fw-bold mb-2">Sleep Duration Last Night (Hours):</label>
+                <input type="number" id="sleep_hours" class="form-control bg-dark text-white border-secondary" value="7.5" step="0.5" min="1" max="14">
+            </div>
+            <div class="col-md-6">
+                <label class="text-neuro-green fw-bold mb-2">Perceived Workload & Stress Level (1-10):</label>
+                <input type="range" id="stress_level" class="form-range" min="1" max="10" value="3" oninput="document.getElementById('stress_val').innerText = this.value">
+                <span class="text-white">Current Rating: <strong id="stress_val" class="text-neuro-green">3</strong> / 10</span>
+            </div>
+        </div>
+
+        <button onclick="startPVTModule()" class="nasa-btn mt-4 py-3">Initiate Psychomotor Vigilance Test (PVT) ➔</button>
+    </div>
+
+    <!-- STEP 2: NASA PVT REACTION TEST SCREEN -->
+    <div id="pvt-section" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-neuro-green mb-0" style="font-family:'Orbitron';">PSYCHOMOTOR VIGILANCE TEST IN PROGRESS</h5>
+            <span class="badge bg-danger text-white border border-danger px-3 py-1" id="trial-badge">Trial 1 of 10</span>
+        </div>
+        
+        <p class="text-light opacity-75 small mb-2">Watch the box. As soon as the counter appears, press <strong>SPACEBAR</strong> or <strong>CLICK</strong> immediately.</p>
+
+        <div class="pvt-screen mb-4" id="pvt-box" onclick="handlePVTTrigger()">
+            <div id="pvt-prompt" class="text-neuro-green fs-5" style="font-family:'Orbitron';">PRESS SPACEBAR TO START TRIAL 1</div>
+            <div id="pvt-counter" class="pvt-counter" style="display: none;">000</div>
+            <div id="pvt-warning" class="pvt-warning" style="display: none;">FALSE START</div>
+        </div>
+
+        <div class="d-flex justify-content-around text-center text-light opacity-75 small">
+            <div>Lapses (Omission >500ms): <strong id="lapse-count" class="text-warning">0</strong></div>
+            <div>False Starts (Commission): <strong id="false-count" class="text-danger">0</strong></div>
         </div>
     </div>
 
-    <form id="rxn-form" method="POST" style="display:none;">
+    <!-- HIDDEN FORM SUBMISSION TO DJANGO VIEWS -->
+    <form id="pvt-form" method="POST" style="display: none;">
         {% csrf_token %}
         <input type="hidden" name="avg_rxn_time" id="avg_rxn_input">
-        <div class="text-center py-4">
-            <h4 class="text-neon mb-3 fw-bold"><i class="bi bi-check-circle-fill me-2"></i>10 TRIALS COMPLETE! MEAN LATENCY CALCULATED</h4>
-            <button type="submit" class="hud-btn w-50 py-3 fs-5">Proceed to EEG Acquisition Phase <i class="bi bi-arrow-right-circle ms-2"></i></button>
-        </div>
+        <input type="hidden" name="sleep_hours" id="sleep_input">
+        <input type="hidden" name="stress_level" id="stress_input">
     </form>
 </div>
 
 <script>
-    let trial = 0;
-    let times = [];
-    let num1, num2, startTime;
+    let currentTrial = 0;
+    const totalTrials = 10;
+    let rxnTimes = [];
+    let lapses = 0;
+    let falseStarts = 0;
+    
+    let timerState = 'IDLE';
+    let startTime, timerInterval, timeoutId;
 
-    // Web Audio API Sound Synthesizer (Cybernetic Audio Feedback)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function playCyberSound(freq = 600, type = 'sine', duration = 0.08) {
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(freq / 2, audioCtx.currentTime + duration);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
+    function startPVTModule() {
+        document.getElementById('survey-section').style.display = 'none';
+        document.getElementById('pvt-section').style.display = 'block';
     }
 
-    function playSuccessSound() {
-        playCyberSound(880, 'triangle', 0.1);
-        setTimeout(() => playCyberSound(1200, 'sine', 0.12), 50);
-    }
-
-    function playErrorSound() {
-        playCyberSound(180, 'sawtooth', 0.2);
-    }
-
-    function nextTrial() {
-        if(trial < 10) {
-            num1 = Math.floor(Math.random() * 89) + 10;
-            num2 = Math.floor(Math.random() * 89) + 10;
-            while(num1 === num2) num2 = Math.floor(Math.random() * 89) + 10;
+    function handlePVTTrigger() {
+        if (timerState === 'IDLE') {
+            prepareNextTrial();
+        } else if (timerState === 'WAITING') {
+            clearTimeout(timeoutId);
+            falseStarts++;
+            document.getElementById('false-count').innerText = falseStarts;
+            document.getElementById('pvt-prompt').style.display = 'none';
+            document.getElementById('pvt-warning').style.display = 'block';
+            timerState = 'IDLE';
+            setTimeout(() => {
+                document.getElementById('pvt-warning').style.display = 'none';
+                document.getElementById('pvt-prompt').style.display = 'block';
+                document.getElementById('pvt-prompt').innerText = "FALSE START! PRESS SPACEBAR TO RETRY";
+            }, 1200);
+        } else if (timerState === 'COUNTING') {
+            let elapsed = Date.now() - startTime;
+            clearInterval(timerInterval);
+            rxnTimes.push(elapsed);
             
-            document.getElementById('btn1').innerText = num1;
-            document.getElementById('btn2').innerText = num2;
-            document.getElementById('trial-counter').innerText = `Trial ${trial + 1} of 10`;
+            if (elapsed > 500) {
+                lapses++;
+                document.getElementById('lapse-count').innerText = lapses;
+            }
+
+            currentTrial++;
+            timerState = 'IDLE';
+
+            if (currentTrial < totalTrials) {
+                document.getElementById('trial-badge').innerText = `Trial ${currentTrial + 1} of 10`;
+                document.getElementById('pvt-counter').innerText = `${elapsed} ms`;
+                setTimeout(() => {
+                    document.getElementById('pvt-counter').style.display = 'none';
+                    document.getElementById('pvt-prompt').style.display = 'block';
+                    document.getElementById('pvt-prompt').innerText = `TRIAL ${currentTrial} DONE. PRESS SPACEBAR FOR TRIAL ${currentTrial + 1}`;
+                }, 1000);
+            } else {
+                completePVTTest();
+            }
+        }
+    }
+
+    function prepareNextTrial() {
+        timerState = 'WAITING';
+        document.getElementById('pvt-prompt').innerText = "WAIT FOR COUNTER...";
+        let delay = Math.floor(Math.random() * 3000) + 2000;
+
+        timeoutId = setTimeout(() => {
+            timerState = 'COUNTING';
+            document.getElementById('pvt-prompt').style.display = 'none';
+            document.getElementById('pvt-counter').style.display = 'block';
             startTime = Date.now();
-        } else {
-            document.getElementById('game-area').style.display = 'none';
-            let avg = (times.reduce((a, b) => a + b, 0) / 10).toFixed(2);
-            document.getElementById('avg_rxn_input').value = avg;
-            document.getElementById('rxn-form').style.display = 'block';
-            playSuccessSound();
-        }
+            
+            timerInterval = setInterval(() => {
+                let now = Date.now() - startTime;
+                document.getElementById('pvt-counter').innerText = now;
+            }, 10);
+        }, delay);
     }
 
-    function processClick(selected) {
-        let elapsed = Date.now() - startTime;
-        let larger = Math.max(num1, num2);
-        
-        if(selected === larger) {
-            playCyberSound(750, 'sine', 0.08);
-        } else {
-            playErrorSound();
-            elapsed += 150; // Penalty latency
-        }
-
-        times.push(elapsed);
-        trial++;
-        nextTrial();
+    function completePVTTest() {
+        let meanRxn = (rxnTimes.reduce((a, b) => a + b, 0) / rxnTimes.length).toFixed(1);
+        document.getElementById('avg_rxn_input').value = meanRxn;
+        document.getElementById('sleep_input').value = document.getElementById('sleep_hours').value;
+        document.getElementById('stress_input').value = document.getElementById('stress_level').value;
+        document.getElementById('pvt-form').submit();
     }
 
-    nextTrial();
+    document.addEventListener('keydown', function(event) {
+        if (event.code === 'Space' && document.getElementById('pvt-section').style.display !== 'none') {
+            event.preventDefault();
+            handlePVTTrigger();
+        }
+    });
 </script>
 {% endblock %}

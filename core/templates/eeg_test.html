@@ -3,145 +3,192 @@
 
 {% block content %}
 <style>
-    .brain-scan-box {
-        position: relative;
-        width: 100%;
-        max-width: 900px;
-        margin: 0 auto;
+    .eeg-container {
+        background: rgba(10, 20, 32, 0.75);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(16, 185, 129, 0.25);
         border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 0 32px rgba(0, 0, 0, 0.8);
+        position: relative;
         overflow: hidden;
-        border: 1px solid var(--primary-cyan);
-        box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
-        background: #030712;
     }
 
-    /* সাইবার লেজার স্ক্যানার লাইন */
-    .laser-scan-line {
+    .eeg-container::before {
+        content: '';
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #00F0FF, #8A2BE2, transparent);
-        box-shadow: 0 0 20px #00F0FF;
-        animation: scanAnim 3s ease-in-out infinite alternate;
-        z-index: 4;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #10B981, transparent);
     }
 
-    @keyframes scanAnim {
-        0% { top: 0%; }
-        100% { top: 96%; }
+    .video-box, .canvas-box {
+        background: #000000;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 8px;
+        padding: 10px;
+        height: 320px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* টেকনিক্যাল সাইবার গ্রিড ওভারলে */
-    .grid-overlay {
+    .video-box video, .video-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
+        filter: brightness(0.9) contrast(1.1);
+    }
+
+    canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    .status-overlay {
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(rgba(3, 7, 18, 0.2), rgba(3, 7, 18, 0.5)),
-                    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 240, 255, 0.04) 3px, rgba(0, 240, 255, 0.04) 3px);
-        pointer-events: none;
-        z-index: 3;
-    }
-
-    .hud-metrics-overlay {
-        position: absolute;
-        top: 12px;
-        left: 15px;
-        right: 15px;
+        top: 15px;
+        left: 20px;
+        right: 20px;
         display: flex;
         justify-content: space-between;
-        z-index: 5;
-        font-family: 'Orbitron', sans-serif;
+        font-family: 'Orbitron', monospace;
         font-size: 0.75rem;
-        color: var(--primary-cyan);
+        color: #10B981;
+        z-index: 5;
+    }
+
+    .scan-line-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: rgba(16, 185, 129, 0.8);
+        box-shadow: 0 0 12px #10B981;
+        animation: scan 4s linear infinite;
+        z-index: 4;
         pointer-events: none;
     }
 
-    .status-text-bright {
-        color: #7DD3FC !important;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.95rem;
-        letter-spacing: 1px;
-        text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+    @keyframes scan {
+        0% { top: 0%; }
+        100% { top: 100%; }
     }
 </style>
 
-<div class="hud-card border-cyan text-center py-4">
-    <h4 class="text-neon mb-2 fw-bold fs-4">STEP 2: LIVE CORTICAL FREQUENCY STREAM ACQUISITION</h4>
-    <p class="status-text-bright mb-4">Real-time brainwave spectrum telemetry processing in progress...</p>
-    
-    <!-- লাইভ ইইজি ক্যানভাস ও স্ক্যানার উইন্ডো -->
-    <div class="brain-scan-box mb-4">
-        <div class="laser-scan-line"></div>
-        <div class="grid-overlay"></div>
-        
-        <!-- HUD টেক্সট স্ট্যাটাস -->
-        <div class="hud-metrics-overlay">
-            <span><i class="bi bi-activity"></i> SIGNAL: 100% STABLE</span>
-            <span>FREQ: 10.2 Hz (ALPHA)</span>
-        </div>
-
-        <!-- ডায়নামিক সাইবার ইইজি অ্যানিমেশন ক্যানভাস -->
-        <canvas id="eegCanvas" width="900" height="280" style="width:100%; height:280px; display:block;"></canvas>
+<div class="eeg-container my-3">
+    <!-- HEADER -->
+    <div class="text-center mb-4">
+        <h4 class="text-neuro-green fw-bold" style="font-family:'Orbitron';">STEP 2: LIVE CORTICAL FREQUENCY STREAM ACQUISITION</h4>
+        <p class="text-light opacity-75 small">Real-time brainwave spectrum telemetry processing in progress...</p>
     </div>
 
-    <form method="POST">
-        {% csrf_token %}
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <button id="scan-btn" type="submit" class="hud-btn py-3 fs-6">
-                    <i class="bi bi-lightning-charge-fill me-2"></i>START FREQUENCY SPECTRUM ANALYSIS
-                </button>
+    <!-- SPLIT LAYOUT GRID -->
+    <div class="row g-4 mb-4">
+        <!-- বাম পাশ: অ্যাস্ট্রোনটের মাথায় সেন্সর ও টেস্ট মোশন ভিডিও -->
+        <div class="col-lg-6">
+            <div class="video-box">
+                <div class="scan-line-overlay"></div>
+                <div class="status-overlay">
+                    <span><i class="bi bi-camera-reels me-1"></i> MONO-SUBJECT MONITOR</span>
+                    <span class="text-danger"><i class="bi bi-record-fill"></i> REC LIVE</span>
+                </div>
+                
+                <!-- আসল ভিডিও অথবা অ্যানিমেটেড জিফ প্লেয়ার -->
+                <video autoplay loop muted playsinline poster="{% static 'image/eeg2.webp' %}">
+                    <!-- আপনার লোকাল ভিডিও থাকলে src="{% static 'videos/eeg_test.mp4' %}" দিতে পারেন -->
+                    <source src="{% static 'image/eeg1.png' %}" type="video/mp4">
+                    <img src="{% static 'image/eeg1.png' %}" alt="EEG Acquisition">
+                </video>
+            </div>
+            <div class="text-center mt-2">
+                <small class="text-neuro-green" style="font-family:'Orbitron'; font-size: 0.72rem;">
+                    ELEX-PAD SENSOR ARRAY: CONNECTED (FRONTAL-PARIETAL)
+                </small>
             </div>
         </div>
+
+        <!-- ডান পাশ: রিয়েল-টাইম লাইভ EEG স্পেকট্রাম অ্যানিমেশন (Canvas Engine) -->
+        <div class="col-lg-6">
+            <div class="canvas-box">
+                <div class="status-overlay">
+                    <span><i class="bi bi-activity"></i> SIGNAL: 100% STABLE</span>
+                    <span>FREQ: 10.2 Hz (ALPHA)</span>
+                </div>
+                <!-- লাইভ সিগন্যাল রেন্ডারিং ক্যানভাস -->
+                <canvas id="eegCanvas"></canvas>
+            </div>
+            <div class="text-center mt-2">
+                <small class="text-neuro-green" style="font-family:'Orbitron'; font-size: 0.72rem;">
+                    LIVE CORTICAL TELEMETRY STREAMING
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBMIT FORM BUTTON -->
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="nasa-btn py-3">
+            <i class="bi bi-lightning-charge-fill me-2"></i> START FREQUENCY SPECTRUM ANALYSIS
+        </button>
     </form>
 </div>
 
+<!-- LIVE CANVAS EEG WAVE ANIMATION SCRIPT -->
 <script>
-    // সাইবারনেটিক রিয়েল-টাইম ইইজি ওয়েভ অ্যানিমেশন
     const canvas = document.getElementById('eegCanvas');
     const ctx = canvas.getContext('2d');
-    let step = 0;
 
     function resizeCanvas() {
         canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
     }
-    window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    let step = 0;
 
     function drawEEG() {
-        // রিয়েল-টাইম ট্রেইল ইফেক্ট
-        ctx.fillStyle = 'rgba(3, 7, 18, 0.25)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // প্রাইমারি সাইবার ওয়েভ
+
+        // Wave 1: Neon Green Primary Alpha Wave
         ctx.beginPath();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = '#00F0FF';
+        ctx.strokeStyle = '#10B981';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#10B981';
 
-        for (let x = 0; x < canvas.width; x++) {
-            let y = canvas.height / 2 + 
-                    Math.sin((x + step) * 0.02) * 35 + 
-                    Math.cos((x + step) * 0.05) * 18 + 
-                    (Math.random() - 0.5) * 4;
+        const height = canvas.height / 2;
+        const width = canvas.width;
+
+        for (let x = 0; x < width; x++) {
+            const y = Math.sin((x + step) * 0.02) * 25 + Math.cos((x + step * 1.5) * 0.01) * 15 + height;
             if (x === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         }
         ctx.stroke();
 
-        // সেকেন্ডারি পার্পল ওয়েভ (হারমোনি)
+        // Wave 2: Purple Secondary Harmonic Wave
         ctx.beginPath();
         ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(138, 43, 226, 0.6)';
+        ctx.strokeStyle = '#8A2BE2';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#8A2BE2';
 
-        for (let x = 0; x < canvas.width; x++) {
-            let y = canvas.height / 2 + 
-                    Math.sin((x - step) * 0.015) * 45 + 
-                    Math.sin((x + step) * 0.04) * 12;
+        for (let x = 0; x < width; x++) {
+            const y = Math.cos((x - step * 0.8) * 0.015) * 30 + Math.sin((x + step) * 0.025) * 10 + height;
             if (x === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         }
         ctx.stroke();
 
-        step += 3;
+        step += 2;
         requestAnimationFrame(drawEEG);
     }
 

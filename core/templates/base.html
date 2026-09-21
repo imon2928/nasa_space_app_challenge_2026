@@ -3,152 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEUROGUARD // NASA SPACE APPS 2026</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>NeuroHealth | Team NeuroNauts</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
-        :root {
-            --primary-cyan: #00F0FF;
-            --primary-purple: #8A2BE2;
-            --dark-bg: #030712;
-            --card-bg: rgba(15, 23, 42, 0.75);
-            --border-glow: rgba(0, 240, 255, 0.3);
-        }
-
+        /* ব্যাকগ্রাউন্ডে মহাকাশ এবং ডার্ক ওভারলে */
         body {
-            background: linear-gradient(rgba(3, 7, 18, 0.92), rgba(3, 7, 18, 0.95)), 
-                        url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background: linear-gradient(rgba(3, 8, 16, 0.88), rgba(3, 8, 16, 0.94)), 
+                        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
             background-size: cover;
-            color: #F1F5F9;
+            color: #F8FAFC;
             font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
         }
 
-        /* হেডার টাইপোগ্রাফি */
-        h1, h2, h3, h4, h5, h6, .brand-title {
+        h1, h2, h3, h4, h5, h6, .brand-title, .metric-value {
             font-family: 'Orbitron', sans-serif;
-            letter-spacing: 2px;
         }
 
-        /* HUD Glassmorphism Card Style */
+        .text-neuro-green, .text-neon {
+            color: #10B981 !important;
+            text-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+        }
+
+        .border-neuro-green, .border-cyan {
+            border-left: 4px solid #10B981 !important;
+        }
+
+        .bg-neuro-green-glow {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid #10B981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+        }
+
         .nasa-card, .hud-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glow);
-            border-radius: 16px;
-            padding: 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.05);
+            background: rgba(10, 20, 32, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
             position: relative;
             overflow: hidden;
         }
 
-        .nasa-card::after, .hud-card::after {
+        .nasa-card::before, .hud-card::before {
             content: '';
             position: absolute;
-            bottom: 0; right: 0;
-            width: 20px; height: 20px;
-            border-right: 2px solid var(--primary-cyan);
-            border-bottom: 2px solid var(--primary-cyan);
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10B981, transparent);
         }
 
-        /* নেভিগেশন হেডার */
-        .header-box {
-            background: rgba(3, 7, 18, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0, 240, 255, 0.3);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-        }
-
-        /* সাইবার বাটন স্টাইল */
         .nasa-btn, .hud-btn {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(138, 43, 226, 0.4) 100%);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
             color: #FFFFFF !important;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 700;
-            border: 1px solid var(--primary-cyan);
-            padding: 14px 28px;
-            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #10B981;
+            padding: 12px 24px;
+            border-radius: 6px;
             width: 100%;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-            display: inline-block;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
             text-decoration: none;
         }
 
         .nasa-btn:hover, .hud-btn:hover {
-            background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--primary-purple) 100%);
-            box-shadow: 0 0 35px rgba(0, 240, 255, 0.6);
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.8);
             transform: translateY(-2px);
-            color: #000 !important;
+            color: #FFFFFF !important;
         }
 
-        .text-cyan, .text-neon {
-            color: var(--primary-cyan) !important;
-            text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+        /* নেভিগেশন বাটন স্টাইল */
+        .btn-nav-custom {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #10B981 !important;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            padding: 6px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .border-cyan {
-            border-left: 4px solid var(--primary-cyan) !important;
+        .btn-nav-custom:hover {
+            background: #10B981;
+            color: #050C16 !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+            transform: translateY(-1px);
         }
 
-        /* লাইভ স্ট্যাটাস ডট */
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #EF4444;
+            color: #F87171 !important;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            padding: 6px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout:hover {
+            background: #EF4444;
+            color: #FFFFFF !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+        }
+
         .live-dot {
             height: 10px;
             width: 10px;
-            background-color: var(--primary-cyan);
+            background-color: #10B981;
             border-radius: 50%;
             display: inline-block;
-            box-shadow: 0 0 12px var(--primary-cyan);
-            animation: blink 1.5s infinite;
+            box-shadow: 0 0 12px #10B981;
+            animation: pulse 1.5s infinite;
         }
 
-        @keyframes blink {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
         }
     </style>
 </head>
 <body>
-    <!-- base.html-এর হেডার অংশটুকু এতে রিপ্লেস কর -->
-<div class="header-box mb-4 py-3">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <i class="bi bi-cpu text-neon fs-3"></i>
-            <h3 class="fw-bold brand-title text-neon mb-0 fs-4">Neuro-Health <span class="fs-6 text-white-50 d-none d-sm-inline">| Team NeuroNauts</span></h3>
-        </div>
-        
-        <div class="d-flex align-items-center gap-3">
-            {% if user.is_authenticated %}
-                <span class="text-neon font-monospace fs-6"><i class="bi bi-person-badge me-1"></i> {{ user.username }}</span>
-                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm px-3" style="font-family:'Orbitron';">
-                    <i class="bi bi-power me-1"></i> LOGOUT
-                </a>
-            {% else %}
+    <!-- মিশন কন্ট্রোল নেভিগেশন বার -->
+    <div class="py-3 mb-4" style="background: rgba(5, 12, 22, 0.9); border-bottom: 1px solid rgba(16, 185, 129, 0.3);">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <!-- ব্র্যান্ড নাম -->
+            <div class="d-flex align-items-center gap-3">
                 <span class="live-dot"></span>
-                <span class="badge bg-black border border-cyan text-neon px-3 py-2" style="font-family:'Orbitron'; font-size:0.75rem;">
-                    SYSTEM ONLINE
-                </span>
-            {% endif %}
+                <a href="{% url 'reaction_test' %}" class="text-decoration-none">
+                    <h3 class="brand-title text-neuro-green mb-0 fs-4">NeuroHealth </h3>
+                </a>
+            </div>
+            
+            <!-- ব্যাক, হোম এবং লগআউট নেভিগেশন কন্ট্রোল -->
+            <div class="d-flex align-items-center gap-2">
+                {% if user.is_authenticated or request.session.astronaut_id %}
+                    <!-- BACK BUTTON -->
+                    <button onclick="history.back()" class="btn-nav-custom">
+                        <i class="bi bi-arrow-left"></i> BACK
+                    </button>
+
+                    <!-- HOME BUTTON -->
+                    <a href="{% url 'reaction_test' %}" class="btn-nav-custom">
+                        <i class="bi bi-house-door-fill"></i> HOME
+                    </a>
+
+                    <!-- ASTRONAUT PROFILE BADGE -->
+                    <span class="text-light opacity-75 small d-none d-lg-inline mx-2" style="font-family:'Orbitron';">
+                        ID: <strong class="text-neuro-green">{{ request.session.astronaut_id|default:user.username }}</strong>
+                    </span>
+
+                    <!-- LOGOUT BUTTON -->
+                    <a href="{% url 'logout' %}" class="btn-logout">
+                        <i class="bi bi-box-arrow-right"></i> LOGOUT
+                    </a>
+                {% else %}
+                    <span class="badge bg-black text-neuro-green border border-success px-3 py-2" style="font-family:'Orbitron';">
+                        NASA HRP STANDARDS COMPLIANT
+                    </span>
+                {% endif %}
+            </div>
         </div>
     </div>
-</div>
 
     <div class="container pb-5">
         {% block content %}{% endblock %}
     </div>
-
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
