@@ -36,7 +36,7 @@
         .top-header {
             background: rgba(5, 12, 24, 0.95);
             border-bottom: 1px solid var(--border-glow);
-            padding: 12px 24px;
+            padding: 10px 16px;
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 1050;
@@ -45,7 +45,7 @@
         .brand-logo-text {
             font-family: 'Orbitron', sans-serif;
             font-weight: 800;
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             color: #ffffff;
         }
         .brand-logo-text span { color: var(--neon-blue); }
@@ -56,26 +56,27 @@
             background: rgba(4, 10, 20, 0.95);
             border-right: 1px solid var(--border-glow);
             position: fixed;
-            top: 65px; bottom: 0; left: 0;
-            padding: 20px 15px;
+            top: 60px; bottom: 0; left: 0;
+            padding: 15px 12px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             overflow-y: auto;
+            transition: all 0.3s ease;
         }
 
         .nav-item-link {
             color: #94a3b8;
             font-family: 'Rajdhani', sans-serif;
             font-weight: 600;
-            font-size: 0.95rem;
-            padding: 10px 14px;
+            font-size: 0.9rem;
+            padding: 8px 12px;
             border-radius: 8px;
             margin-bottom: 4px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             text-decoration: none;
             transition: all 0.3s ease;
         }
@@ -89,50 +90,85 @@
         /* MAIN CONTENT AREA */
         .main-wrapper {
             margin-left: 240px;
-            margin-top: 65px;
-            padding: 25px 30px;
+            margin-top: 60px;
+            padding: 20px 15px;
+            transition: all 0.3s ease;
         }
 
         .hud-card {
             background: var(--card-bg);
             border: 1px solid var(--border-glow);
             border-radius: 10px;
-            padding: 16px;
+            padding: 14px;
             backdrop-filter: blur(12px);
             position: relative;
+        }
+
+        /* 📱 MOBILE RESPONSIVE MEDIA QUERIES */
+        @media (max-width: 991px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                top: 0;
+                min-height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-glow);
+                padding: 10px;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+                margin-top: 10px;
+                padding: 12px 10px;
+            }
+
+            .top-header {
+                position: relative;
+            }
+
+            .sidebar nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .nav-item-link {
+                margin-bottom: 0;
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+
+            .sidebar-bottom-img {
+                display: none; /* মোবাইলে বড় ইমেজ হাইড করে স্থান বাঁচানো হলো */
+            }
         }
     </style>
 </head>
 <body>
 
     <!-- 1. TOP HEADER BANNER -->
-    <div class="top-header d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <i class="bi bi-brain text-info fs-2"></i>
+    <div class="top-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-brain text-info fs-3"></i>
             <div>
                 <div class="brand-logo-text">Neuro-<span>Health</span></div>
-                <small class="text-secondary" style="font-size: 0.65rem; letter-spacing: 1px;">FOR A SAFER TOMORROW IN SPACE</small>
+                <small class="text-secondary d-none d-sm-block" style="font-size: 0.6rem; letter-spacing: 1px;">FOR A SAFER TOMORROW IN SPACE</small>
             </div>
-            <div class="vr mx-3 text-secondary" style="height: 30px;"></div>
-            <div>
-                <small class="text-secondary font-monospace d-block" style="font-size:0.7rem; letter-spacing: 1px;">REAL-TIME NEURO MONITORING FOR ASTRONAUTS</small>
-                <small class="text-info font-monospace" style="font-size:0.65rem;">MONITOR | PREDICT | PREVENT | PERFORM</small>
+            <div class="vr mx-2 text-secondary d-none d-md-block" style="height: 25px;"></div>
+            <div class="d-none d-md-block">
+                <small class="text-secondary font-monospace d-block" style="font-size:0.65rem;">REAL-TIME NEURO MONITORING</small>
+                <small class="text-info font-monospace" style="font-size:0.6rem;">MONITOR | PREDICT | PREVENT | PERFORM</small>
             </div>
         </div>
 
-        <div class="d-flex align-items-center gap-4">
-            <span class="badge bg-black text-success border border-success px-3 py-2 font-monospace">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-black text-success border border-success px-2 py-1 font-monospace" style="font-size: 0.7rem;">
                 ● LIVE
             </span>
-            <div class="text-end font-monospace text-secondary" style="font-size:0.75rem;">
-                <div>Sep 21, 2026</div>
-                <div class="text-white">18:25:00 (UTC)</div>
-            </div>
-            <div class="d-flex align-items-center gap-2 bg-black bg-opacity-50 p-2 rounded border border-secondary">
-                <i class="bi bi-person-circle fs-3 text-info"></i>
-                <div class="text-start" style="font-size:0.75rem;">
-                    <div class="fw-bold text-white">Astronaut {{ request.session.astronaut_id|default:user.username }}</div>
-                    <small class="text-secondary">Mission: Deep Space</small>
+            <div class="d-flex align-items-center gap-2 bg-black bg-opacity-50 p-1 px-2 rounded border border-secondary">
+                <i class="bi bi-person-circle fs-5 text-info"></i>
+                <div class="text-start" style="font-size:0.7rem;">
+                    <div class="fw-bold text-white">{{ request.session.astronaut_id|default:user.username }}</div>
                 </div>
             </div>
         </div>
@@ -141,7 +177,7 @@
     <!-- 2. LEFT SIDEBAR NAVIGATION -->
     <div class="sidebar">
         <div>
-            <nav class="mb-4">
+            <nav class="mb-2">
                 <a href="{% url 'dashboard' %}" class="nav-item-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-house-door-fill"></i> Dashboard
                 </a>
@@ -149,36 +185,31 @@
                     <i class="bi bi-activity"></i> EEG Test
                 </a>
                 <a href="{% url 'reaction_test' %}" class="nav-item-link {% if request.resolver_match.url_name == 'reaction_test' %}active{% endif %}">
-                    <i class="bi bi-controller"></i> Reaction Time Test
+                    <i class="bi bi-controller"></i> Reaction Test
                 </a>
-                <a href="#" class="nav-item-link"><i class="bi bi-heart-pulse-fill"></i> Health Metrics</a>
-                <a href="#" class="nav-item-link"><i class="bi bi-bar-chart-line-fill"></i> Risk Prediction</a>
-                <a href="#" class="nav-item-link"><i class="bi bi-lightbulb-fill"></i> Recommendations</a>
-                <a href="#" class="nav-item-link"><i class="bi bi-journal-text"></i> Mission Log</a>
-                <a href="#" class="nav-item-link"><i class="bi bi-people-fill"></i> Crew & Support</a>
+                <a href="#" class="nav-item-link"><i class="bi bi-heart-pulse-fill"></i> Metrics</a>
+                <a href="#" class="nav-item-link"><i class="bi bi-bar-chart-line-fill"></i> Risk</a>
                 <a href="#" class="nav-item-link"><i class="bi bi-gear-fill"></i> Settings</a>
             </nav>
         </div>
 
         <!-- SIDEBAR BOTTOM IMAGE SECTION -->
-        <div class="border-top border-secondary pt-3 text-center">
+        <div class="border-top border-secondary pt-2 text-center sidebar-bottom-img">
             <div class="position-relative overflow-hidden rounded mb-2 border border-secondary" style="border-color: rgba(0, 229, 255, 0.2) !important;">
-                <!-- STATIC FILE LOAD -->
                 <img src="{% static 'images/astronaut.png' %}" 
-                     onerror="this.onerror=null; this.src='{% static 'image/eeg1.png' %}';" 
+                     onerror="this.onerror=null; this.src='{% static 'image/astronaut.png' %}';" 
                      alt="Space Astronaut" 
                      class="img-fluid rounded" 
-                     style="width: 100%; height: 160px; object-fit: cover;">
+                     style="width: 100%; height: 130px; object-fit: cover;">
                 
                 <div class="position-absolute bottom-0 start-0 end-0 p-2 text-start" style="background: linear-gradient(to top, rgba(3, 8, 18, 0.95), transparent);">
-                    <small class="text-white font-monospace fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 1px; border-left: 2px solid #00e5ff; padding-left: 6px;">
+                    <small class="text-white font-monospace fw-bold d-block" style="font-size: 0.6rem; letter-spacing: 1px; border-left: 2px solid #00e5ff; padding-left: 6px;">
                         HUMAN MINDS<br>FURTHER TOMORROW
                     </small>
                 </div>
             </div>
 
-            <!-- LOGOUT BUTTON -->
-            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm w-100 mt-2 font-monospace" style="font-size:0.7rem;">LOGOUT</a>
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm w-100 mt-1 font-monospace" style="font-size:0.7rem;">LOGOUT</a>
         </div>
     </div>
 
