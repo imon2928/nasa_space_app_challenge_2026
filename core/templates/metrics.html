@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4">
+    <h3 class="font-monospace fw-bold text-white mb-0"><i class="bi bi-heart-pulse-fill text-info me-2"></i>HEALTH METRICS</h3>
+    <small class="text-secondary">Real-Time Physiological & Neuro-Vitals</small>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="hud-card text-center">
+            <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
+            <small class="text-secondary d-block font-monospace">HEART RATE</small>
+            <div class="display-6 font-monospace text-white fw-bold">{{ heart_rate }} <small class="fs-6 text-secondary">BPM</small></div>
+            <span class="badge bg-success-subtle text-success font-monospace mt-2">● NORMAL</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="hud-card text-center">
+            <i class="bi bi-droplet-fill text-info fs-2 mb-2"></i>
+            <small class="text-secondary d-block font-monospace">BLOOD OXYGEN (SpO2)</small>
+            <div class="display-6 font-monospace text-white fw-bold">{{ spo2 }}<small class="fs-6 text-secondary">%</small></div>
+            <span class="badge bg-success-subtle text-success font-monospace mt-2">● OPTIMAL</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="hud-card text-center">
+            <i class="bi bi-thermometer-half text-warning fs-2 mb-2"></i>
+            <small class="text-secondary d-block font-monospace">CORE TEMP</small>
+            <div class="display-6 font-monospace text-white fw-bold">{{ body_temp }}<small class="fs-6 text-secondary">°C</small></div>
+            <span class="badge bg-success-subtle text-success font-monospace mt-2">● STABLE</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="hud-card text-center">
+            <i class="bi bi-activity text-purple fs-2 mb-2" style="color:#a855f7;"></i>
+            <small class="text-secondary d-block font-monospace">STRESS LEVEL</small>
+            <div class="display-6 font-monospace text-white fw-bold">{{ stress_level }}</div>
+            <span class="badge bg-success-subtle text-success font-monospace mt-2">● LOW RISK</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

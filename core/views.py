@@ -123,3 +123,28 @@ def eeg_test(request):
         return redirect('dashboard')
         
     return render(request, 'eeg_test.html')
+
+
+@login_required(login_url='login')
+def metrics_view(request):
+    context = {
+        'heart_rate': 74,
+        'spo2': 98,
+        'body_temp': 36.8,
+        'stress_level': 'Low',
+    }
+    return render(request, 'metrics.html', context)
+
+
+@login_required(login_url='login')
+def risk_view(request):
+    context = {
+        'neuro_fatigue_risk': 'Low (18%)',
+        'cognitive_decline': 'Very Low (5%)',
+        'hypoxia_risk': 'Minimal (2%)',
+        'eva_status': 'Optimal / Ready',
+    }
+    return render(request, 'risk.html', context)
+
+def settings_view(request):
+    return render(request, 'settings.html')

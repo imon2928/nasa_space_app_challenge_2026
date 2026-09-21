@@ -27,6 +27,15 @@
         color: #ffffff;
     }
 
+    /* সাব-টাইটেল বা বিবরণীর টেক্সট স্পষ্টভাবে দেখানোর জন্য স্টাইল */
+    .metric-desc {
+        color: #CBD5E1 !important;
+        font-size: 0.72rem;
+        font-weight: 500;
+        opacity: 0.95;
+        letter-spacing: 0.3px;
+    }
+
     .progress-bar-custom {
         height: 5px;
         background: rgba(255, 255, 255, 0.1);
@@ -70,7 +79,88 @@
         padding: 10px 14px;
     }
 
-    /* 📱 MOBILE MEDIA QUERIES FOR DASHBOARD */
+    /* BOTTOM HUD CARDS */
+    .bottom-hud-card {
+        background: rgba(6, 14, 26, 0.85);
+        border: 1px solid rgba(0, 229, 255, 0.25);
+        border-radius: 10px;
+        padding: 16px;
+        height: 100%;
+        backdrop-filter: blur(12px);
+    }
+
+    .purple-hud-card {
+        background: rgba(18, 14, 36, 0.85);
+        border: 1px solid rgba(168, 85, 247, 0.5);
+        border-radius: 10px;
+        padding: 16px;
+        height: 100%;
+        backdrop-filter: blur(12px);
+    }
+
+    .bottom-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.78rem;
+        letter-spacing: 1px;
+        color: #00e5ff;
+        font-weight: 700;
+    }
+
+    .risk-row {
+        background: rgba(3, 8, 18, 0.6);
+        border: 1px solid rgba(0, 229, 255, 0.15);
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+    }
+
+    .risk-progress-bg {
+        width: 80px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .risk-progress-fill {
+        height: 100%;
+        background: #10b981;
+        box-shadow: 0 0 8px #10b981;
+        border-radius: 10px;
+    }
+
+    .recommendation-inner-box {
+        background: rgba(10, 20, 38, 0.7);
+        border: 1px solid rgba(0, 229, 255, 0.15);
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .btn-purple-action {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #ffffff !important;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid rgba(168, 85, 247, 0.7);
+        padding: 10px;
+        border-radius: 6px;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-purple-action:hover {
+        box-shadow: 0 0 25px rgba(139, 92, 246, 0.8);
+        transform: translateY(-1px);
+    }
+
+    /* MOBILE RESPONSIVE MEDIA QUERIES */
     @media (max-width: 767px) {
         .lobe-tag {
             font-size: 0.5rem;
@@ -115,7 +205,7 @@
 
 <!-- মোবাইল-ফ্রেন্ডলি রেস্পন্সিভ গ্রিড -->
 <div class="row g-2">
-    <!-- কলাম ১: ৪টি কগনিটিভ স্কোর -->
+    <!-- কলাম ১: ৪টি কগনিটিভ স্কোর (বাম পাশ) -->
     <div class="col-12 col-sm-6 col-xl-3">
         <!-- ATTENTION -->
         <div class="metric-box">
@@ -126,7 +216,7 @@
             <div class="progress-bar-custom mb-2">
                 <div class="bg-info h-100" style="width: {{ eeg.attention_score }}%;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.attention_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.attention_desc }}</small>
         </div>
 
         <!-- WORKING MEMORY -->
@@ -138,7 +228,7 @@
             <div class="progress-bar-custom mb-2">
                 <div class="h-100" style="width: {{ eeg.memory_score }}%; background:#a855f7;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.memory_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.memory_desc }}</small>
         </div>
 
         <!-- SLEEP QUALITY -->
@@ -150,7 +240,7 @@
             <div class="progress-bar-custom mb-2">
                 <div class="bg-warning h-100" style="width: {{ eeg.sleep_score }}%;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.sleep_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.sleep_desc }}</small>
         </div>
 
         <!-- DECISION MAKING -->
@@ -162,11 +252,11 @@
             <div class="progress-bar-custom mb-2">
                 <div class="bg-primary h-100" style="width: {{ eeg.decision_score }}%;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.decision_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.decision_desc }}</small>
         </div>
     </div>
 
-    <!-- কলাম ২: ৩D ব্রেইন অ্যাক্টিভিটি ম্যাপ -->
+    <!-- কলাম ২: ৩D ব্রেইন অ্যাক্টিভিটি ম্যাপ (মাঝখানে) -->
     <div class="col-12 col-xl-4 my-2 my-xl-0">
         <div class="brain-center-box d-flex flex-column justify-content-between h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -185,7 +275,7 @@
         </div>
     </div>
 
-    <!-- কলাম ৩: ৪টি কগনিটিভ স্কোর -->
+    <!-- কলাম ৩: ৪টি কগনিটিভ স্কোর (ডান পাশ) -->
     <div class="col-12 col-sm-6 col-xl-3">
         <!-- FOCUS LEVEL -->
         <div class="metric-box">
@@ -196,7 +286,7 @@
             <div class="progress-bar-custom mb-2">
                 <div class="h-100" style="width: {{ eeg.focus_score }}%; background:#f43f5e;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.focus_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.focus_desc }}</small>
         </div>
 
         <!-- MOOD & AFFECTIVE STATE -->
@@ -207,7 +297,7 @@
             <div class="d-flex align-items-center gap-2 my-1">
                 <span class="fw-bold text-white fs-6">{{ eeg.mood_status }}</span>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.mood_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.mood_desc }}</small>
         </div>
 
         <!-- SENSORY-MOTOR ADAPTATION -->
@@ -219,7 +309,7 @@
             <div class="progress-bar-custom mb-2">
                 <div class="bg-info h-100" style="width: {{ eeg.sensory_score }}%;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.sensory_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.sensory_desc }}</small>
         </div>
 
         <!-- CONCENTRATION LEVEL -->
@@ -231,100 +321,258 @@
             <div class="progress-bar-custom mb-2">
                 <div class="bg-success h-100" style="width: {{ eeg.concentration_score }}%;"></div>
             </div>
-            <small class="text-secondary d-block" style="font-size:0.68rem;">{{ eeg.concentration_desc }}</small>
+            <small class="metric-desc d-block">{{ eeg.concentration_desc }}</small>
         </div>
     </div>
 
-    <!-- কলাম ৪: ওভারঅল কগনিটিভ হেলথ -->
+    <!-- কলাম ৪: ওভারঅল কগনিটিভ হেলথ ও কোয়েট -->
     <div class="col-12 col-sm-6 col-xl-2">
+        <!-- QUOTE BOX -->
         <div class="quote-box mb-2">
-            <div class="fst-italic text-light" style="font-size:0.7rem;">"Explore Further. Stay Healthier."</div>
-            <div class="text-end text-info font-monospace" style="font-size:0.6rem;">— Team NeuroNauts</div>
+            <div class="fst-italic text-light" style="font-size:0.75rem;">"Explore Further. Stay Healthier."</div>
+            <div class="text-end text-info font-monospace" style="font-size:0.65rem;">— Team NeuroNauts</div>
         </div>
 
-        <div class="hud-card text-center py-2 mb-2">
-            <span class="font-monospace text-secondary d-block mb-1" style="font-size:0.6rem;">OVERALL COGNITIVE HEALTH</span>
-            <div class="display-6 font-monospace text-success fw-bold mb-0">{{ eeg.neuro_score }}</div>
-            <small class="text-secondary font-monospace" style="font-size:0.65rem;">/ 100</small>
-            <div class="text-success font-monospace fw-bold mt-1" style="font-size:0.7rem;">GOOD</div>
-        </div>
-
-        <div class="hud-card py-2">
-            <span class="font-monospace text-info fw-bold d-block mb-1" style="font-size:0.65rem;">QUICK INSIGHTS</span>
-            <div class="text-light" style="font-size:0.65rem; line-height:1.5;">
-                <div><i class="bi bi-check-circle-fill text-success me-1"></i> EEG normal</div>
-                <div><i class="bi bi-check-circle-fill text-success me-1"></i> No fatigue</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- বটম সেকশন: EEG WAVE ACTIVITY CHART, PREDICTION & RISK -->
-<div class="row g-2 mt-2">
-    <div class="col-12 col-md-5">
-        <div class="hud-card">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="font-monospace text-white fw-bold" style="font-size: 0.72rem;">EEG WAVE ACTIVITY</span>
-            </div>
+        <!-- OVERALL COGNITIVE HEALTH WITH CIRCULAR NEON RING -->
+        <div class="hud-card text-center py-3 mb-2">
+            <span class="font-monospace text-info fw-bold d-block mb-2 text-uppercase" style="font-size:0.65rem; letter-spacing:0.8px;">
+                <i class="bi bi-aspect-ratio me-1"></i> OVERALL COGNITIVE HEALTH
+            </span>
             
-            <div class="row align-items-center">
-                <div class="col-7" style="height: 100px;">
-                    <canvas id="eegWaveChart"></canvas>
+            <div class="position-relative d-inline-flex justify-content-center align-items-center my-1" style="width: 120px; height: 120px;">
+                <svg class="w-100 h-100" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+                    <path stroke="rgba(255, 255, 255, 0.1)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path stroke="#10b981" stroke-width="3.2" stroke-linecap="round" fill="none" 
+                          stroke-dasharray="{{ eeg.neuro_score|default:84 }}, 100" 
+                          style="filter: drop-shadow(0 0 6px #10b981); transition: stroke-dasharray 1s ease;"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                
+                <div class="position-absolute text-center">
+                    <div class="font-monospace text-white fw-bold lh-1" style="font-size: 1.6rem; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
+                        {{ eeg.neuro_score|default:84 }}
+                    </div>
+                    <small class="text-secondary font-monospace d-block" style="font-size: 0.65rem;">/ 100</small>
                 </div>
-                <div class="col-5 font-monospace" style="font-size: 0.6rem; line-height: 1.5;">
-                    <div class="text-info">● Delta: {{ eeg.delta_uv }} µV</div>
-                    <div style="color:#a855f7;">● Theta: {{ eeg.theta_uv }} µV</div>
-                    <div class="text-success">● Alpha: {{ eeg.alpha_uv }} µV</div>
-                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="col-12 col-md-3">
-        <div class="hud-card h-100">
-            <span class="font-monospace text-white fw-bold d-block mb-1" style="font-size: 0.72rem;">PREDICTION & RISK</span>
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <small class="text-secondary font-monospace" style="font-size:0.65rem;">Neuro-Fatigue</small>
-                <span class="badge bg-success-subtle text-success font-monospace" style="font-size:0.6rem;">{{ eeg.fatigue_risk }}</span>
+            <div class="text-success font-monospace fw-bold mt-1" style="font-size:0.85rem; letter-spacing: 1px; color:#10b981 !important; text-shadow: 0 0 8px rgba(16,185,129,0.5);">
+                GOOD
             </div>
-            <div class="d-flex justify-content-between align-items-center">
-                <small class="text-secondary font-monospace" style="font-size:0.65rem;">EVA Readiness</small>
-                <span class="badge bg-success font-monospace" style="font-size:0.6rem;">{{ eeg.eva_readiness }}</span>
-            </div>
+            <small class="text-secondary d-block mt-1" style="font-size:0.65rem;">All systems within normal range.</small>
         </div>
-    </div>
 
-    <div class="col-12 col-md-4">
-        <div class="hud-card h-100 d-flex flex-column justify-content-between">
-            <div>
-                <span class="font-monospace text-white fw-bold d-block mb-1" style="font-size: 0.72rem;">
-                    <i class="bi bi-lightbulb text-warning me-1"></i> RECOMMENDED ACTION
-                </span>
-                <p class="text-light small mb-1" style="font-size:0.68rem; line-height: 1.3;">
-                    {{ eeg.recommendation }}
-                </p>
+        <!-- QUICK INSIGHTS LIST -->
+        <div class="hud-card py-2">
+            <span class="font-monospace text-info fw-bold d-block mb-2 text-uppercase" style="font-size:0.68rem; letter-spacing:0.8px;">
+                QUICK INSIGHTS
+            </span>
+            <div class="text-light font-monospace" style="font-size:0.68rem; line-height:1.7;">
+                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> EEG patterns normal</div>
+                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> No significant fatigue detected</div>
+                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> Cognitive performance stable</div>
+                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> Mood and stress within normal range</div>
+                <div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> Ready for scheduled tasks</div>
             </div>
-            <a href="{% url 'eeg_test' %}" class="btn btn-outline-info font-monospace w-100 btn-sm mt-1" style="font-size: 0.6rem;">RE-RUN TEST</a>
         </div>
     </div>
 </div>
 
+<!-- বটম সেকশন: EEG WAVE ACTIVITY, PREDICTION & RISK, RECOMMENDED ACTION -->
+<div class="row g-3 mt-1">
+    <!-- ১. EEG WAVE ACTIVITY CHART & VALUES -->
+    <div class="col-12 col-lg-5">
+        <div class="bottom-hud-card d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="bottom-title"><i class="bi bi-aspect-ratio me-1"></i> EEG WAVE ACTIVITY</span>
+                    <span class="font-monospace text-secondary" style="font-size: 0.65rem; letter-spacing:0.8px;">REAL-TIME VALUES</span>
+                </div>
+                
+                <div class="row align-items-center">
+                    <div class="col-7" style="height: 105px;">
+                        <canvas id="eegWaveChart"></canvas>
+                    </div>
+                    <div class="col-5 font-monospace" style="font-size: 0.7rem; line-height: 1.7;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color:#00e5ff;">● Delta</span>
+                            <span class="text-white fw-bold">{{ eeg.delta_uv|default:12 }} µV</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color:#a855f7;">● Theta</span>
+                            <span class="text-white fw-bold">{{ eeg.theta_uv|default:18 }} µV</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color:#10b981;">● Alpha</span>
+                            <span class="text-white fw-bold">{{ eeg.alpha_uv|default:32 }} µV</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color:#f59e0b;">● Beta</span>
+                            <span class="text-white fw-bold">{{ eeg.beta_uv|default:24 }} µV</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="color:#e11d48;">● Gamma</span>
+                            <span class="text-white fw-bold">{{ eeg.gamma_uv|default:10 }} µV</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-start gap-3 mt-2 font-monospace" style="font-size: 0.65rem;">
+                <span style="color:#00e5ff;">● Delta</span>
+                <span style="color:#a855f7;">● Theta</span>
+                <span style="color:#10b981;">● Alpha</span>
+                <span style="color:#f59e0b;">● Beta</span>
+                <span style="color:#e11d48;">● Gamma</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ২. PREDICTION & RISK -->
+    <div class="col-12 col-lg-3">
+        <div class="bottom-hud-card">
+            <span class="bottom-title d-block mb-3"><i class="bi bi-shield-check me-1"></i> PREDICTION & RISK</span>
+            
+            <div class="risk-row d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-record-circle text-info" style="font-size:0.75rem;"></i>
+                    <span class="font-monospace text-light" style="font-size:0.72rem;">Neuro-Fatigue Risk</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="risk-progress-bg">
+                        <div class="risk-progress-fill" style="width: 45%;"></div>
+                    </div>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">Low</span>
+                </div>
+            </div>
+
+            <div class="risk-row d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-record-circle text-info" style="font-size:0.75rem;"></i>
+                    <span class="font-monospace text-light" style="font-size:0.72rem;">Cognitive Decline Risk</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="risk-progress-bg">
+                        <div class="risk-progress-fill" style="width: 30%;"></div>
+                    </div>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">Low</span>
+                </div>
+            </div>
+
+            <div class="risk-row d-flex justify-content-between align-items-center mb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-record-circle text-danger" style="font-size:0.75rem;"></i>
+                    <span class="font-monospace text-light" style="font-size:0.72rem;">EVA Readiness</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="risk-progress-bg">
+                        <div class="risk-progress-fill" style="width: 80%;"></div>
+                    </div>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ৩. RECOMMENDED ACTION -->
+    <div class="col-12 col-lg-4">
+        <div class="purple-hud-card d-flex flex-column justify-content-between">
+            <div>
+                <span class="bottom-title d-block mb-3" style="color:#c084fc !important;">
+                    <i class="bi bi-lightbulb me-1"></i> RECOMMENDED ACTION
+                </span>
+
+                <div class="recommendation-inner-box d-flex align-items-center justify-content-between gap-3 mb-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 30px; height: 30px; background: #10b981; color: #000; font-size: 1rem;">
+                            <i class="bi bi-check-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-white fw-bold font-monospace" style="font-size: 0.78rem;">Continue current routine.</div>
+                            <small class="text-secondary d-block" style="font-size: 0.68rem; line-height: 1.3;">
+                                {{ eeg.recommendation|default:"Maintain hydration, regular breaks and light exposure as per schedule." }}
+                            </small>
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-right text-secondary fs-5"></i>
+                </div>
+            </div>
+
+            <a href="{% url 'eeg_test' %}" class="btn-purple-action">
+                VIEW DETAILED RECOMMENDATIONS
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER TAGLINE -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top border-secondary font-monospace" style="font-size: 0.68rem; color: #64748b; border-color: rgba(255, 255, 255, 0.1) !important;">
+    <div>
+        <span class="text-info">➔</span> A HEALTHY MIND CAN TAKE YOU ANYWHERE <span class="text-info">←</span>
+    </div>
+    <div>
+        <span class="text-info">Team NeuroNauts</span> | NASA Inspired. Human Centered.
+    </div>
+</div>
+
+<!-- MULTI-WAVE CHART.JS SCRIPT -->
 <script>
     const ctx = document.getElementById('eegWaveChart').getContext('2d');
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['1s', '2s', '3s', '4s', '5s', '6s'],
+            labels: ['1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s'],
             datasets: [
-                { label: 'Alpha', data: [{{ eeg.alpha_uv }}, {{ eeg.alpha_uv }}+4, {{ eeg.alpha_uv }}-2, {{ eeg.alpha_uv }}+3, {{ eeg.alpha_uv }}, {{ eeg.alpha_uv }}+2], borderColor: '#10b981', borderWidth: 1.5, tension: 0.4 },
-                { label: 'Beta', data: [{{ eeg.beta_uv }}, {{ eeg.beta_uv }}-3, {{ eeg.beta_uv }}+2, {{ eeg.beta_uv }}-1, {{ eeg.beta_uv }}, {{ eeg.beta_uv }}-2], borderColor: '#f59e0b', borderWidth: 1.5, tension: 0.4 }
+                {
+                    label: 'Delta',
+                    data: [12, 18, 10, 15, 12, 14, 11, 13],
+                    borderColor: '#00e5ff',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4
+                },
+                {
+                    label: 'Theta',
+                    data: [18, 14, 22, 16, 20, 15, 19, 18],
+                    borderColor: '#a855f7',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4
+                },
+                {
+                    label: 'Alpha',
+                    data: [32, 28, 38, 30, 42, 35, 31, 33],
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4
+                },
+                {
+                    label: 'Beta',
+                    data: [24, 20, 26, 22, 28, 21, 25, 24],
+                    borderColor: '#f59e0b',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4
+                },
+                {
+                    label: 'Gamma',
+                    data: [10, 15, 8, 12, 9, 14, 10, 11],
+                    borderColor: '#e11d48',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4
+                }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { x: { display: false }, y: { display: false } }
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            }
         }
     });
 </script>
