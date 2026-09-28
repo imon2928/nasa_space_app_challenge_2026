@@ -1,6 +1,10 @@
+# Virtual Environment
 venv/
-*.pyc
-__pycache__/
+env/
+
+# Database
 db.sqlite3
-.DS_Store
-staticfiles/
+
+# Python Cache
+__pycache__/
+*.pyc
