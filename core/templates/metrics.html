@@ -1,42 +1,403 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="mb-4">
-    <h3 class="font-monospace fw-bold text-white mb-0"><i class="bi bi-heart-pulse-fill text-info me-2"></i>HEALTH METRICS</h3>
-    <small class="text-secondary">Real-Time Physiological & Neuro-Vitals</small>
+<!-- Three.js & GLTF Loader CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<style>
+    /* Custom Sci-Fi Glassmorphism Styling */
+    .hud-card-modern {
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 242, 254, 0.15);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hud-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.8), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .hud-card-modern:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 10px 30px -10px rgba(0, 242, 254, 0.3);
+        border-color: rgba(0, 242, 254, 0.4);
+    }
+
+    .hud-card-modern:hover::before {
+        opacity: 1;
+    }
+
+    /* Pulse effect for status badges */
+    .pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 5px;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    /* 3D Canvas Section Styling */
+    #three-canvas-container {
+        width: 100%;
+        height: 320px;
+        border-radius: 16px;
+        background: radial-gradient(circle at center, rgba(15, 23, 42, 0.85) 0%, rgba(3, 7, 18, 0.98) 100%);
+        border: 1px solid rgba(0, 242, 254, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .canvas-overlay-text {
+        position: absolute;
+        top: 15px;
+        left: 20px;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    /* HUD TELEMETRY OVERLAYS ON LEFT & RIGHT OF 3D CANVAS */
+    .hud-telemetry-panel {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        background: rgba(6, 14, 26, 0.75);
+        border: 1px solid rgba(0, 229, 255, 0.25);
+        border-radius: 10px;
+        padding: 12px 16px;
+        backdrop-filter: blur(8px);
+        min-width: 170px;
+    }
+
+    .hud-left { left: 20px; }
+    .hud-right { right: 20px; }
+
+    .telemetry-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.65rem;
+        color: #00e5ff;
+        letter-spacing: 0.8px;
+    }
+
+    .telemetry-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+</style>
+
+<!-- Header Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="font-monospace fw-bold text-white mb-0">
+            <i class="bi bi-heart-pulse-fill text-info me-2"></i>HEALTH METRICS & NEURO-VITALS
+        </h3>
+        <small class="text-secondary font-monospace">Real-time Telemetry & Bio-feedback System</small>
+    </div>
+    <div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace p-2">
+            <i class="bi bi-wifi me-1"></i> LIVE STREAMING
+        </span>
+    </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="hud-card text-center">
-            <i class="bi bi-heart-fill text-danger fs-2 mb-2"></i>
-            <small class="text-secondary d-block font-monospace">HEART RATE</small>
-            <div class="display-6 font-monospace text-white fw-bold">{{ heart_rate }} <small class="fs-6 text-secondary">BPM</small></div>
-            <span class="badge bg-success-subtle text-success font-monospace mt-2">● NORMAL</span>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="hud-card text-center">
-            <i class="bi bi-droplet-fill text-info fs-2 mb-2"></i>
-            <small class="text-secondary d-block font-monospace">BLOOD OXYGEN (SpO2)</small>
-            <div class="display-6 font-monospace text-white fw-bold">{{ spo2 }}<small class="fs-6 text-secondary">%</small></div>
-            <span class="badge bg-success-subtle text-success font-monospace mt-2">● OPTIMAL</span>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="hud-card text-center">
-            <i class="bi bi-thermometer-half text-warning fs-2 mb-2"></i>
-            <small class="text-secondary d-block font-monospace">CORE TEMP</small>
-            <div class="display-6 font-monospace text-white fw-bold">{{ body_temp }}<small class="fs-6 text-secondary">°C</small></div>
-            <span class="badge bg-success-subtle text-success font-monospace mt-2">● STABLE</span>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="hud-card text-center">
-            <i class="bi bi-activity text-purple fs-2 mb-2" style="color:#a855f7;"></i>
-            <small class="text-secondary d-block font-monospace">STRESS LEVEL</small>
-            <div class="display-6 font-monospace text-white fw-bold">{{ stress_level }}</div>
-            <span class="badge bg-success-subtle text-success font-monospace mt-2">● LOW RISK</span>
+<!-- 3D Interactive Visualizer Section with Overlay Panels -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div id="three-canvas-container">
+            <div class="canvas-overlay-text">
+                <span class="badge bg-dark text-info border border-info font-monospace mb-1">3D DYNAMIC HEART CORE</span>
+                <p class="text-secondary small font-monospace mb-0">Biometric Simulation Syncing with Real-time Vitals</p>
+            </div>
+
+            <!-- LEFT SIDE INFOS: HRV & RESPIRATION RATE -->
+            <div class="hud-telemetry-panel hud-left d-none d-md-block">
+                <div class="mb-3">
+                    <span class="telemetry-title d-block"><i class="bi bi-activity me-1"></i> HRV (SDNN)</span>
+                    <div class="telemetry-value">{{ hrv|default:68 }} <small class="fs-6 text-secondary">ms</small></div>
+                    <small class="text-success font-monospace" style="font-size: 0.65rem;">● GOOD RECOVERY</small>
+                </div>
+                <div>
+                    <span class="telemetry-title d-block"><i class="bi bi-wind me-1"></i> RESPIRATION</span>
+                    <div class="telemetry-value">{{ respiration_rate|default:16 }} <small class="fs-6 text-secondary">br/m</small></div>
+                    <small class="text-info font-monospace" style="font-size: 0.65rem;">● STABLE RHYTHM</small>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE INFOS: BLOOD PRESSURE & PERFUSION INDEX -->
+            <div class="hud-telemetry-panel hud-right d-none d-md-block text-end">
+                <div class="mb-3">
+                    <span class="telemetry-title d-block"><i class="bi bi-speedometer2 me-1"></i> BLOOD PRESSURE</span>
+                    <div class="telemetry-value">{{ bp_systolic|default:120 }}/{{ bp_diastolic|default:80 }} <small class="fs-6 text-secondary">mmHg</small></div>
+                    <small class="text-success font-monospace" style="font-size: 0.65rem;">● OPTIMAL RANGE</small>
+                </div>
+                <div>
+                    <span class="telemetry-title d-block"><i class="bi bi-moisture me-1"></i> PERFUSION INDEX</span>
+                    <div class="telemetry-value">{{ perfusion_index|default:4.2 }} <small class="fs-6 text-secondary">%</small></div>
+                    <small class="text-success font-monospace" style="font-size: 0.65rem;">● NORMAL FLOW</small>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Metrics Cards Section -->
+<div class="row g-4">
+    <!-- Heart Rate -->
+    <div class="col-md-3">
+        <div class="hud-card-modern text-center">
+            <div class="p-3 d-inline-block rounded-circle mb-2" style="background: rgba(239, 68, 68, 0.1);">
+                <i class="bi bi-heart-fill text-danger fs-2"></i>
+            </div>
+            <small class="text-secondary d-block font-monospace fw-bold">HEART RATE</small>
+            <div class="display-6 font-monospace text-white fw-bold my-1">
+                {{ heart_rate|default:74 }} <small class="fs-6 text-secondary">BPM</small>
+            </div>
+            <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 rounded-pill mt-2">
+                <span class="pulse-dot bg-success"></span> NORMAL
+            </span>
+        </div>
+    </div>
+
+    <!-- Blood Oxygen -->
+    <div class="col-md-3">
+        <div class="hud-card-modern text-center">
+            <div class="p-3 d-inline-block rounded-circle mb-2" style="background: rgba(6, 182, 212, 0.1);">
+                <i class="bi bi-droplet-fill text-info fs-2"></i>
+            </div>
+            <small class="text-secondary d-block font-monospace fw-bold">BLOOD OXYGEN (SpO2)</small>
+            <div class="display-6 font-monospace text-white fw-bold my-1">
+                {{ spo2|default:98 }}<small class="fs-6 text-secondary">%</small>
+            </div>
+            <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 rounded-pill mt-2">
+                <span class="pulse-dot bg-success"></span> OPTIMAL
+            </span>
+        </div>
+    </div>
+
+    <!-- Core Temp -->
+    <div class="col-md-3">
+        <div class="hud-card-modern text-center">
+            <div class="p-3 d-inline-block rounded-circle mb-2" style="background: rgba(245, 158, 11, 0.1);">
+                <i class="bi bi-thermometer-half text-warning fs-2"></i>
+            </div>
+            <small class="text-secondary d-block font-monospace fw-bold">CORE TEMP</small>
+            <div class="display-6 font-monospace text-white fw-bold my-1">
+                {{ body_temp|default:36.8 }}<small class="fs-6 text-secondary">°C</small>
+            </div>
+            <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 rounded-pill mt-2">
+                <span class="pulse-dot bg-success"></span> STABLE
+            </span>
+        </div>
+    </div>
+
+    <!-- Stress Level -->
+    <div class="col-md-3">
+        <div class="hud-card-modern text-center">
+            <div class="p-3 d-inline-block rounded-circle mb-2" style="background: rgba(168, 85, 247, 0.1);">
+                <i class="bi bi-activity fs-2" style="color:#a855f7;"></i>
+            </div>
+            <small class="text-secondary d-block font-monospace fw-bold">STRESS LEVEL</small>
+            <div class="display-6 font-monospace text-white fw-bold my-1">
+                {{ stress_level|default:"LOW" }}
+            </div>
+            <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 rounded-pill mt-2">
+                <span class="pulse-dot bg-success"></span> LOW RISK
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Three.js 3D Heart Visualizer Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById('three-canvas-container');
+        if (!container) return;
+
+        // Django Variables
+        const rawHeartRate = parseFloat("{{ heart_rate|default:74 }}") || 74;
+        const rawStressLevel = "{{ stress_level|default:'Low' }}".toString().toLowerCase();
+
+        // 1. DYNAMIC PULSE & ROTATION SPEED CALCULATOR BASED ON HEART RATE (BPM)
+        let bpmFrequency = rawHeartRate / 60; // Converts BPM to Hz
+        let heartColor = 0xff0055; // Default Cyan/Pink
+        let outerMeshColor = 0x00f2fe;
+        let spinSpeed = 0.004;
+
+        if (rawHeartRate < 60) {
+            // Bradycardia / Low Heart Rate
+            heartColor = 0x3b82f6; // Cool Blue
+            spinSpeed = 0.002;
+        } else if (rawHeartRate >= 60 && rawHeartRate <= 100) {
+            // Normal Resting Heart Rate
+            heartColor = 0xff0055; // Normal Pinkish Red
+            spinSpeed = 0.005;
+        } else {
+            // Tachycardia / Elevated Heart Rate (>100 BPM)
+            heartColor = 0xef4444; // Warning Red
+            spinSpeed = 0.015;     // Faster rotation
+        }
+
+        // Stress Adjustments
+        if (rawStressLevel.includes('high') || rawStressLevel.includes('severe')) {
+            outerMeshColor = 0xef4444;
+            spinSpeed += 0.01;
+        }
+
+        // Scene Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.z = 4.2;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(outerMeshColor, 2, 50);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        // Outer Wireframe Sphere (Biometric Energy Field)
+        const outerGeo = new THREE.IcosahedronGeometry(1.6, 3);
+        const outerMat = new THREE.MeshBasicMaterial({
+            color: outerMeshColor,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const outerSphere = new THREE.Mesh(outerGeo, outerMat);
+        scene.add(outerSphere);
+
+        // HEART MODEL GROUP
+        const heartGroup = new THREE.Group();
+        scene.add(heartGroup);
+
+        // GLTF LOADER FOR 3D HEART
+        const loader = new THREE.GLTFLoader();
+
+        loader.load(
+            "{% static 'models/heart.glb' %}",
+            function (gltf) {
+                const heartMesh = gltf.scene;
+                
+                // Enlarged scale to fill space properly
+                heartMesh.scale.set(1.35, 1.35, 1.35); 
+                heartMesh.position.set(0, -0.1, 0);
+
+                heartMesh.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: heartColor,
+                            wireframe: true,
+                            transparent: true,
+                            opacity: 0.88
+                        });
+                    }
+                });
+
+                heartGroup.add(heartMesh);
+            },
+            function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function (error) {
+                console.warn('Custom heart.glb file not found, loading procedural 3D core:', error);
+                
+                // Fallback geometry
+                const fallbackGeo = new THREE.SphereGeometry(0.85, 18, 18);
+                const fallbackMat = new THREE.MeshBasicMaterial({
+                    color: heartColor,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const fallbackMesh = new THREE.Mesh(fallbackGeo, fallbackMat);
+                heartGroup.add(fallbackMesh);
+            }
+        );
+
+        // Mouse Interactivity
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+        const windowHalfX = container.clientWidth / 2;
+        const windowHalfY = container.clientHeight / 2;
+
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left - windowHalfX);
+            mouseY = (e.clientY - rect.top - windowHalfY);
+        });
+
+        // Animation Loop with Real-time Lub-Dub Pulse Function
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const t = clock.getElapsedTime();
+
+            // Continuous rotation
+            outerSphere.rotation.y += 0.002;
+            heartGroup.rotation.y += spinSpeed;
+
+            // REALISTIC HEARTBEAT SIMULATION (Lub-Dub rhythm synchronized with BPM)
+            const beatPhase = (t * bpmFrequency * 2 * Math.PI) % (2 * Math.PI);
+            let contraction = 0;
+
+            if (beatPhase < 0.25 * Math.PI) {
+                contraction = Math.sin(beatPhase * 4) * 0.14; // Systole (Lub)
+            } else if (beatPhase > 0.35 * Math.PI && beatPhase < 0.6 * Math.PI) {
+                contraction = Math.sin((beatPhase - 0.35 * Math.PI) * 4) * 0.08; // Diastole (Dub)
+            }
+
+            const currentScale = 1 + contraction;
+            heartGroup.scale.set(currentScale, currentScale, currentScale);
+
+            // Mouse Tilt Reactivity
+            targetX = mouseX * 0.0008;
+            targetY = mouseY * 0.0008;
+            outerSphere.rotation.y += (targetX - outerSphere.rotation.y) * 0.05;
+            outerSphere.rotation.x += (targetY - outerSphere.rotation.x) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Resize Handler
+        window.addEventListener('resize', () => {
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+    });
+</script>
 {% endblock %}

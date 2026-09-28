@@ -2,9 +2,14 @@
 {% load static %}
 
 {% block content %}
+<!-- CHART.JS, THREE.JS & GLTF LOADER LIBRARIES -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <style>
+    /* METRIC BOXES */
     .metric-box {
         background: rgba(6, 14, 26, 0.85);
         border: 1px solid rgba(0, 229, 255, 0.18);
@@ -42,62 +47,52 @@
         overflow: hidden;
     }
 
-    /* 3D BRAIN & ASTRONAUT HUD CENTER BOX */
-    .brain-center-box {
+    /* THREE.JS CENTER BRAIN CARD */
+    .threejs-brain-card {
         background: radial-gradient(circle at center, rgba(0, 229, 255, 0.12) 0%, rgba(3, 8, 18, 0.95) 80%);
-        border: 1px solid rgba(0, 229, 255, 0.25);
+        border: 1px solid rgba(0, 229, 255, 0.3);
         border-radius: 12px;
-        padding: 16px;
+        padding: 14px;
         position: relative;
-        text-align: center;
         height: 100%;
-        min-height: 400px;
+        min-height: 420px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        overflow: hidden;
     }
 
-    .brain-hud-wrapper {
-        position: relative;
-        display: inline-block;
+    #threejs-container {
         width: 100%;
-        max-width: 380px;
-        margin: auto;
+        height: 310px;
+        cursor: grab;
     }
 
-    .brain-img-3d {
-        width: 100%;
-        height: auto;
-        max-height: 350px;
-        object-fit: contain;
-        filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.3));
+    #threejs-container:active {
+        cursor: grabbing;
     }
 
-   /* NEON LOBE TAGS (COMPACT & MATCHING REFERENCE UI) */
-    .lobe-tag-hud {
+    /* OVERLAY 3D LOBE TAGS */
+    .threejs-lobe-tag {
         position: absolute;
         font-family: 'Orbitron', sans-serif;
         font-size: 0.58rem;
         color: #ffffff;
-        background: rgba(3, 8, 18, 0.90);
+        background: rgba(3, 8, 18, 0.88);
         border: 1px solid rgba(0, 229, 255, 0.6);
-        padding: 4px 6px;
+        padding: 4px 8px;
         border-radius: 4px;
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
         backdrop-filter: blur(6px);
-        white-space: nowrap;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
         pointer-events: none;
-        text-align: left;
-        max-width: 170px;
-        z-index: 5;
+        z-index: 10;
+        white-space: nowrap;
     }
 
-    /* PERFECT NON-OVERLAPPING POSITIONS */
-    .tag-frontal { top: 12%; left: -8%; }
-    .tag-parietal { top: 5%; right: -8%; }
-    .tag-temporal { top: 62%; left: -6%; }
-    .tag-occipital { top: 48%; right: -8%; }
-
+    .tag-3d-frontal { top: 12%; left: 2%; }
+    .tag-3d-parietal { top: 8%; right: 2%; }
+    .tag-3d-temporal { top: 62%; left: 2%; }
+    .tag-3d-occipital { top: 52%; right: 2%; }
 
     .quote-box {
         background: rgba(6, 14, 26, 0.9);
@@ -145,7 +140,7 @@
     }
 
     .progress-bar-bg {
-        width: 80px;
+        width: 70px;
         height: 8px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 10px;
@@ -189,20 +184,9 @@
         box-shadow: 0 0 25px rgba(139, 92, 246, 0.8);
         transform: translateY(-1px);
     }
-
-    @media (max-width: 767px) {
-        .lobe-tag-hud {
-            font-size: 0.5rem;
-            padding: 2px 4px;
-        }
-        .brain-img-3d {
-            max-height: 250px;
-        }
-    }
 </style>
 
 {% if not has_tested %}
-<!-- প্রথমবার প্রবেশের মেসেজ -->
 <div class="hud-card text-center py-4 my-3">
     <i class="bi bi-brain text-info display-2 mb-2"></i>
     <h4 class="font-monospace text-white fw-bold">NO EEG DATA EVALUATED YET</h4>
@@ -214,7 +198,7 @@
 
 {% else %}
 
-<!-- ড্যাশবোর্ডের মূল বিষয়বস্তু -->
+<!-- HEADER STATUS BAR -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <div>
         <h4 class="font-monospace fw-bold text-white mb-0">Good Afternoon, Astronaut!</h4>
@@ -227,11 +211,10 @@
     </div>
 </div>
 
-<!-- ৪ কলাম রেস্পন্সিভ গ্রিড -->
-<div class="row g-2">
-    <!-- কলাম ১: ৪টি কগনিটিভ স্কোর (বাম পাশ) -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <!-- ATTENTION -->
+<!-- TOP GRID SECTION -->
+<div class="row g-3">
+    <!-- LEFT METRICS -->
+    <div class="col-12 col-md-6 col-xl-3">
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title"><i class="bi bi-eye me-1"></i> ATTENTION</span>
@@ -243,7 +226,6 @@
             <small class="metric-desc d-block">{{ eeg.attention_desc }}</small>
         </div>
 
-        <!-- WORKING MEMORY -->
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title" style="color:#a855f7;"><i class="bi bi-cpu me-1"></i> WORKING MEMORY</span>
@@ -255,7 +237,6 @@
             <small class="metric-desc d-block">{{ eeg.memory_desc }}</small>
         </div>
 
-        <!-- SLEEP QUALITY -->
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title text-warning"><i class="bi bi-moon-stars me-1"></i> SLEEP QUALITY</span>
@@ -267,7 +248,6 @@
             <small class="metric-desc d-block">{{ eeg.sleep_desc }}</small>
         </div>
 
-        <!-- DECISION MAKING -->
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title text-primary"><i class="bi bi-lightning me-1"></i> DECISION MAKING</span>
@@ -280,60 +260,52 @@
         </div>
     </div>
 
-    <!-- কলাম ২: ৩D ব্রেইন অ্যাক্টিভিটি ম্যাপ (শর্ট ও ক্লিন ট্যাবস) -->
-<div class="col-12 col-xl-4 my-2 my-xl-0">
-    <div class="brain-center-box">
-        <!-- HEADER TITLE & LIVE BADGE -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="font-monospace text-white fw-bold" style="font-size: 0.85rem; letter-spacing: 1px;">
-                BRAIN ACTIVITY (LIVE EEG)
-            </span>
-            <span class="badge bg-black text-success border border-success font-monospace" style="font-size: 0.65rem;">
-                ● LIVE
-            </span>
-        </div>
-        
-        <!-- ASTRONAUT 3D BRAIN HUD DISPLAY -->
-        <div class="brain-hud-wrapper my-auto">
-            <img src="{% static 'images/brain_hud.png' %}" 
-                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=800&q=80';" 
-                 alt="Brain Activity EEG" class="brain-img-3d rounded">
-            
-            <!-- 4 SHORT & CLEAN NEON LOBE TAGS -->
-            <div class="lobe-tag-hud tag-frontal">
-                <span class="text-white fw-bold">Frontal</span><br>
-                <small class="text-info font-monospace" style="font-size:0.55rem;">
-                    {{ eeg.focus_score|default:79 }}/100 • Active
-                </small>
+    <!-- CENTER THREE.JS 3D BRAIN MAP SECTION -->
+    <div class="col-12 col-xl-4">
+        <div class="threejs-brain-card">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="font-monospace text-white fw-bold" style="font-size: 0.82rem; letter-spacing: 1px;">
+                    <i class="bi bi-box me-1 text-info"></i>3D NEURO TOPOGRAPHY
+                </span>
+                <span class="badge bg-black text-info border border-info font-monospace" style="font-size: 0.6rem;">
+                    ROTATE & ZOOM
+                </span>
             </div>
-            
-            <div class="lobe-tag-hud tag-parietal">
-                <span class="text-white fw-bold">Parietal</span><br>
-                <small class="text-info font-monospace" style="font-size:0.55rem;">
-                    {{ eeg.sensory_score|default:84 }}/100 • Normal
-                </small>
+
+            <!-- 3D CANVAS AND OVERLAY TAGS -->
+            <div class="position-relative my-auto">
+                <div id="threejs-container"></div>
+
+                <!-- DYNAMIC OVERLAY LOBE TAGS -->
+                <div class="threejs-lobe-tag tag-3d-frontal">
+                    <span class="text-info fw-bold">Frontal (Focus)</span><br>
+                    <small class="font-monospace text-light">{{ eeg.focus_score|default:79 }}/100 • Active</small>
+                </div>
+
+                <div class="threejs-lobe-tag tag-3d-parietal">
+                    <span class="fw-bold" style="color:#a855f7;">Parietal (Sensory)</span><br>
+                    <small class="font-monospace text-light">{{ eeg.sensory_score|default:84 }}/100 • Normal</small>
+                </div>
+
+                <div class="threejs-lobe-tag tag-3d-temporal">
+                    <span class="text-warning fw-bold">Temporal (Memory)</span><br>
+                    <small class="font-monospace text-light">{{ eeg.memory_score|default:96 }}/100 • Optimal</small>
+                </div>
+
+                <div class="threejs-lobe-tag tag-3d-occipital">
+                    <span class="text-success fw-bold">Occipital (Visual)</span><br>
+                    <small class="font-monospace text-light">Alpha: {{ eeg.alpha_uv|default:32 }} µV</small>
+                </div>
             </div>
-            
-            <div class="lobe-tag-hud tag-temporal">
-                <span class="text-white fw-bold">Temporal</span><br>
-                <small class="text-info font-monospace" style="font-size:0.55rem;">
-                    {{ eeg.memory_score|default:96 }}/100 • Optimal
-                </small>
-            </div>
-            
-            <div class="lobe-tag-hud tag-occipital">
-                <span class="text-white fw-bold">Occipital</span><br>
-                <small class="text-info font-monospace" style="font-size:0.55rem;">
-                    Alpha: {{ eeg.alpha_uv|default:32 }} µV
-                </small>
+
+            <div class="text-center font-monospace text-secondary mt-1" style="font-size: 0.6rem;">
+                <i class="bi bi-hand-index me-1"></i> Drag to rotate 3D Model | Scroll to Zoom
             </div>
         </div>
     </div>
-</div>
 
-    <!-- কলাম ৩: ৪টি কগনিটিভ স্কোর (ডান পাশ) -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <!-- FOCUS LEVEL -->
+    <!-- RIGHT METRICS -->
+    <div class="col-12 col-md-6 col-xl-3">
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title" style="color:#f43f5e !important;"><i class="bi bi-crosshair me-1"></i> FOCUS LEVEL</span>
@@ -345,7 +317,6 @@
             <small class="metric-desc d-block">{{ eeg.focus_desc }}</small>
         </div>
 
-        <!-- MOOD & AFFECTIVE STATE -->
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title text-info"><i class="bi bi-emoji-smile me-1"></i> MOOD & AFFECTIVE</span>
@@ -356,7 +327,6 @@
             <small class="metric-desc d-block">{{ eeg.mood_desc }}</small>
         </div>
 
-        <!-- SENSORY-MOTOR ADAPTATION -->
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title text-warning" style="color:#f59e0b !important;"><i class="bi bi-hand-index me-1"></i> SENSORY-MOTOR</span>
@@ -368,7 +338,6 @@
             <small class="metric-desc d-block">{{ eeg.sensory_desc }}</small>
         </div>
 
-        <!-- CONCENTRATION LEVEL -->
         <div class="metric-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="metric-title text-success"><i class="bi bi-brain me-1"></i> CONCENTRATION</span>
@@ -381,101 +350,75 @@
         </div>
     </div>
 
-    <!-- কলাম ৪: ওভারঅল কগনিটিভ হেলথ ও কোয়েট -->
-    <div class="col-12 col-sm-6 col-xl-2">
-        <!-- QUOTE BOX -->
+    <!-- OVERALL HEALTH & INSIGHTS -->
+    <div class="col-12 col-md-6 col-xl-2">
         <div class="quote-box mb-2">
-            <div class="fst-italic text-light" style="font-size:0.75rem;">"Explore Further. Stay Healthier."</div>
-            <div class="text-end text-info font-monospace" style="font-size:0.65rem;">— Team NeuroNauts</div>
+            <div class="fst-italic text-light" style="font-size:0.72rem;">"Explore Further. Stay Healthier."</div>
+            <div class="text-end text-info font-monospace" style="font-size:0.62rem;">— Team NeuroNauts</div>
         </div>
 
-        <!-- OVERALL COGNITIVE HEALTH WITH CIRCULAR NEON RING -->
-        <div class="hud-card text-center py-3 mb-2">
-            <span class="font-monospace text-info fw-bold d-block mb-2 text-uppercase" style="font-size:0.65rem; letter-spacing:0.8px;">
-                <i class="bi bi-aspect-ratio me-1"></i> OVERALL COGNITIVE HEALTH
+        <div class="hud-card text-center py-2 mb-2">
+            <span class="font-monospace text-info fw-bold d-block mb-1 text-uppercase" style="font-size:0.62rem;">
+                COGNITIVE HEALTH
             </span>
-            
-            <div class="position-relative d-inline-flex justify-content-center align-items-center my-1" style="width: 120px; height: 120px;">
-                <svg class="w-100 h-100" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
-                    <path stroke="rgba(255, 255, 255, 0.1)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path stroke="#10b981" stroke-width="3.2" stroke-linecap="round" fill="none" 
-                          stroke-dasharray="{{ eeg.neuro_score|default:84 }}, 100" 
-                          style="filter: drop-shadow(0 0 6px #10b981); transition: stroke-dasharray 1s ease;"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                
-                <div class="position-absolute text-center">
-                    <div class="font-monospace text-white fw-bold lh-1" style="font-size: 1.6rem; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
-                        {{ eeg.neuro_score|default:84 }}
-                    </div>
-                    <small class="text-secondary font-monospace d-block" style="font-size: 0.65rem;">/ 100</small>
-                </div>
-            </div>
-
-            <div class="text-success font-monospace fw-bold mt-1" style="font-size:0.85rem; letter-spacing: 1px; color:#10b981 !important; text-shadow: 0 0 8px rgba(16,185,129,0.5);">
-                GOOD
-            </div>
-            <small class="text-secondary d-block mt-1" style="font-size:0.65rem;">All systems within normal range.</small>
+            <div class="font-monospace text-white fw-bold display-6 my-1">{{ eeg.neuro_score|default:84 }}</div>
+            <div class="text-success font-monospace fw-bold" style="font-size:0.75rem;">GOOD</div>
         </div>
 
-        <!-- QUICK INSIGHTS LIST -->
         <div class="hud-card py-2">
-            <span class="font-monospace text-info fw-bold d-block mb-2 text-uppercase" style="font-size:0.68rem; letter-spacing:0.8px;">
+            <span class="font-monospace text-info fw-bold d-block mb-1 text-uppercase" style="font-size:0.62rem;">
                 QUICK INSIGHTS
             </span>
-            <div class="text-light font-monospace" style="font-size:0.68rem; line-height:1.7;">
-                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> EEG patterns normal</div>
-                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> No significant fatigue detected</div>
-                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> Cognitive performance stable</div>
-                <div class="d-flex align-items-center mb-1"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> Mood and stress within normal range</div>
-                <div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2" style="color:#10b981 !important;"></i> Ready for scheduled tasks</div>
+            <div class="text-light font-monospace" style="font-size:0.62rem; line-height:1.5;">
+                <div>✔ EEG patterns normal</div>
+                <div>✔ No fatigue detected</div>
+                <div>✔ Cognitive stable</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- বটম সেকশন: EEG WAVE ACTIVITY, PREDICTION & RISK, RECOMMENDED ACTION -->
+<!-- BOTTOM SECTION CARDS -->
 <div class="row g-3 mt-1">
-    
-    <!-- ১. EEG WAVE ACTIVITY BOX -->
-    <div class="col-12 col-lg-5">
+    <!-- 1. EEG WAVE ACTIVITY -->
+    <div class="col-12 col-md-6 col-lg-5">
         <div class="hud-box-card d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="hud-box-title"><i class="bi bi-aspect-ratio"></i> EEG WAVE ACTIVITY</span>
-                    <span class="font-monospace text-secondary" style="font-size: 0.65rem; letter-spacing:0.8px;">REAL-TIME VALUES</span>
+                    <span class="font-monospace text-secondary" style="font-size: 0.65rem;">REAL-TIME VALUES</span>
                 </div>
                 
                 <div class="row align-items-center">
-                    <div class="col-7" style="height: 105px;">
+                    <div class="col-7" style="height: 100px;">
                         <canvas id="eegWaveChart"></canvas>
                     </div>
-                    <div class="col-5 font-monospace" style="font-size: 0.7rem; line-height: 1.7;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color:#00e5ff;">● Delta</span>
+                    <div class="col-5 font-monospace" style="font-size: 0.68rem; line-height: 1.6;">
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#00e5ff;">Delta</span>
                             <span class="text-white fw-bold">{{ eeg.delta_uv|default:12 }} µV</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color:#a855f7;">● Theta</span>
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#a855f7;">Theta</span>
                             <span class="text-white fw-bold">{{ eeg.theta_uv|default:18 }} µV</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color:#10b981;">● Alpha</span>
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#10b981;">Alpha</span>
                             <span class="text-white fw-bold">{{ eeg.alpha_uv|default:32 }} µV</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color:#f59e0b;">● Beta</span>
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#f59e0b;">Beta</span>
                             <span class="text-white fw-bold">{{ eeg.beta_uv|default:24 }} µV</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="color:#e11d48;">● Gamma</span>
+                        <div class="d-flex justify-content-between">
+                            <span style="color:#e11d48;">Gamma</span>
                             <span class="text-white fw-bold">{{ eeg.gamma_uv|default:10 }} µV</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-start gap-3 mt-2 font-monospace" style="font-size: 0.65rem;">
+            <div class="d-flex justify-content-start gap-2 mt-2 font-monospace" style="font-size: 0.62rem;">
                 <span style="color:#00e5ff;">● Delta</span>
                 <span style="color:#a855f7;">● Theta</span>
                 <span style="color:#10b981;">● Alpha</span>
@@ -485,73 +428,64 @@
         </div>
     </div>
 
-    <!-- ২. PREDICTION & RISK BOX -->
-    <div class="col-12 col-lg-3">
+    <!-- 2. PREDICTION & RISK -->
+    <div class="col-12 col-md-6 col-lg-3">
         <div class="hud-box-card">
             <span class="hud-box-title mb-3"><i class="bi bi-shield-check"></i> PREDICTION & RISK</span>
             
             <div class="risk-item-box d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-record-circle text-info" style="font-size:0.75rem;"></i>
-                    <span class="font-monospace text-light" style="font-size:0.72rem;">Neuro-Fatigue Risk</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
+                <span class="font-monospace text-light" style="font-size:0.68rem;">Neuro-Fatigue Risk</span>
+                <div class="d-flex align-items-center gap-1">
                     <div class="progress-bar-bg">
                         <div class="progress-bar-fill" style="width: {% if eeg.fatigue_risk == 'High' %}90%{% elif eeg.fatigue_risk == 'Moderate' %}50%{% else %}25%{% endif %};"></div>
                     </div>
-                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">{{ eeg.fatigue_risk|default:"Low" }}</span>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.65rem;">{{ eeg.fatigue_risk|default:"Low" }}</span>
                 </div>
             </div>
 
             <div class="risk-item-box d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-record-circle text-info" style="font-size:0.75rem;"></i>
-                    <span class="font-monospace text-light" style="font-size:0.72rem;">Cognitive Decline Risk</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
+                <span class="font-monospace text-light" style="font-size:0.68rem;">Cognitive Decline Risk</span>
+                <div class="d-flex align-items-center gap-1">
                     <div class="progress-bar-bg">
                         <div class="progress-bar-fill" style="width: {% if eeg.cognitive_risk == 'Moderate' %}60%{% else %}20%{% endif %};"></div>
                     </div>
-                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">{{ eeg.cognitive_risk|default:"Low" }}</span>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.65rem;">{{ eeg.cognitive_risk|default:"Low" }}</span>
                 </div>
             </div>
 
             <div class="risk-item-box d-flex justify-content-between align-items-center mb-0">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-record-circle text-danger" style="font-size:0.75rem;"></i>
-                    <span class="font-monospace text-light" style="font-size:0.72rem;">EVA Readiness</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
+                <span class="font-monospace text-light" style="font-size:0.68rem;">EVA Readiness</span>
+                <div class="d-flex align-items-center gap-1">
                     <div class="progress-bar-bg">
                         <div class="progress-bar-fill" style="width: {% if eeg.eva_readiness == 'Ready' or eeg.eva_readiness == 'Peak Clearance (EVA Ready)' %}85%{% else %}30%{% endif %};"></div>
                     </div>
-                    <span class="font-monospace text-success fw-bold" style="font-size:0.68rem; color:#10b981 !important;">{{ eeg.eva_readiness|default:"Ready" }}</span>
+                    <span class="font-monospace text-success fw-bold" style="font-size:0.65rem;">{{ eeg.eva_readiness|default:"Ready" }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ৩. RECOMMENDED ACTION BOX -->
+    <!-- 3. RECOMMENDED ACTION -->
     <div class="col-12 col-lg-4">
         <div class="purple-hud-box d-flex flex-column justify-content-between">
             <div>
-                <span class="hud-box-title mb-3" style="color:#c084fc !important;">
+                <span class="hud-box-title mb-2" style="color:#c084fc !important;">
                     <i class="bi bi-lightbulb"></i> RECOMMENDED ACTION
                 </span>
 
-                <div class="recommendation-inner-card d-flex align-items-center justify-content-between gap-3 mb-2">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 30px; height: 30px; background: #10b981; color: #000; font-size: 1rem;">
+                <div class="recommendation-inner-card d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 26px; height: 26px; background: #10b981; color: #000; font-size: 0.85rem;">
                             <i class="bi bi-check-lg"></i>
                         </div>
                         <div>
-                            <div class="text-white fw-bold font-monospace" style="font-size: 0.78rem;">Continue current routine.</div>
-                            <small class="text-secondary d-block" style="font-size: 0.68rem; line-height: 1.3;">
-                                {{ eeg.recommendation|default:"Maintain hydration, regular breaks and light exposure as per schedule." }}
+                            <div class="text-white fw-bold font-monospace" style="font-size: 0.72rem;">Continue current routine.</div>
+                            <small class="text-secondary d-block" style="font-size: 0.62rem; line-height: 1.2;">
+                                {{ eeg.recommendation|default:"Maintain hydration, regular breaks and light exposure as per schedule."|truncatechars:65 }}
                             </small>
                         </div>
                     </div>
-                    <i class="bi bi-chevron-right text-secondary fs-5"></i>
+                    <i class="bi bi-chevron-right text-secondary fs-6"></i>
                 </div>
             </div>
 
@@ -563,18 +497,135 @@
 
 </div>
 
-<!-- FOOTER TAGLINE -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top border-secondary font-monospace" style="font-size: 0.68rem; color: #64748b; border-color: rgba(255, 255, 255, 0.1) !important;">
-    <div>
-        <span class="text-info">➔</span> A HEALTHY MIND CAN TAKE YOU ANYWHERE <span class="text-info">←</span>
-    </div>
-    <div>
-        <span class="text-info">Team NeuroNauts</span> | NASA Inspired. Human Centered.
-    </div>
+<!-- FOOTER -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-2 border-top border-secondary font-monospace" style="font-size: 0.65rem; color: #64748b;">
+    <div><span class="text-info">➔</span> A HEALTHY MIND CAN TAKE YOU ANYWHERE <span class="text-info">←</span></div>
+    <div><span class="text-info">Team NeuroNauts</span> | NASA Inspired. Human Centered.</div>
 </div>
 
-<!-- MULTI-WAVE CHART.JS SCRIPT -->
+<!-- THREE.JS 3D ANATOMICAL MODEL SCRIPT -->
 <script>
+    const container = document.getElementById('threejs-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    // SCENE, CAMERA, RENDERER
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(0, 0, 4.8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    // ORBIT CONTROLS
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxDistance = 7;
+    controls.minDistance = 3;
+
+    // LIGHTING
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0x00e5ff, 2.5, 50);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    // GROUP TO HOLD 3D OBJECTS FOR ROTATION
+    const brainGroup = new THREE.Group();
+    scene.add(brainGroup);
+
+    // 3D REAL MODEL GLTF LOADER
+    const loader = new THREE.GLTFLoader();
+    
+    loader.load(
+        "{% static 'models/brain.glb' %}",
+        function (gltf) {
+            const model = gltf.scene;
+            
+            // 1. Scale down properly to fit in the box
+            model.scale.set(1.9, 1.9, 1.9);
+            
+            // 2. Position down on Y-axis to center correctly inside the card
+            model.position.set(0,-1.8, 0);
+
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.transparent = true;
+                    child.material.opacity = 0.95;
+                    child.material.wireframe = false;
+                }
+            });
+
+            brainGroup.add(model);
+        },
+        function (xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        function (error) {
+            console.warn('Custom .glb model not found or failed to load, falling back to procedural cybernetic mesh:', error);
+            
+            // FALLBACK PROCEDURAL BRAIN MESH IF GLB FILE IS NOT LOADED
+            const brainMat = new THREE.MeshStandardMaterial({
+                color: 0x00e5ff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.38,
+                emissive: 0x002b36
+            });
+
+            const hemisphereGeo = new THREE.SphereGeometry(1.0, 28, 28);
+            hemisphereGeo.scale(0.85, 0.95, 1.35);
+
+            const leftHemisphere = new THREE.Mesh(hemisphereGeo, brainMat);
+            leftHemisphere.position.set(-0.42, 0.2, 0);
+            brainGroup.add(leftHemisphere);
+
+            const rightHemisphere = new THREE.Mesh(hemisphereGeo, brainMat);
+            rightHemisphere.position.set(0.42, 0.2, 0);
+            brainGroup.add(rightHemisphere);
+
+            const cerebellumGeo = new THREE.SphereGeometry(0.55, 18, 18);
+            cerebellumGeo.scale(1.2, 0.65, 0.85);
+            const cerebellum = new THREE.Mesh(cerebellumGeo, brainMat);
+            cerebellum.position.set(0, -0.45, -0.75);
+            brainGroup.add(cerebellum);
+
+            const stemGeo = new THREE.CylinderGeometry(0.18, 0.12, 0.8, 16);
+            const stem = new THREE.Mesh(stemGeo, brainMat);
+            stem.position.set(0, -0.85, -0.3);
+            stem.rotation.x = 0.2;
+            brainGroup.add(stem);
+        }
+    );
+
+    // DEFAULT PERSPECTIVE & POSITION
+    brainGroup.rotation.x = 0.1;
+    brainGroup.rotation.y = 0;
+    brainGroup.position.set(0, 0, 0);
+
+    // ANIMATION LOOP
+    function animate() {
+        requestAnimationFrame(animate);
+        brainGroup.rotation.y += 0.004; // Continuous smooth rotation
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // RESIZE EVENT
+    window.addEventListener('resize', () => {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+    });
+
+    // CHART.JS LINE GRAPH
     const ctx = document.getElementById('eegWaveChart').getContext('2d');
     new Chart(ctx, {
         type: 'line',

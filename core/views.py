@@ -181,13 +181,40 @@ def eeg_test(request):
     return render(request, 'eeg_test.html')
 
 
+# core/views.py
+
 @login_required(login_url='login')
 def metrics_view(request):
+    # সেশন থেকে বর্তমান EEG টেস্টের ডাটা ফেচ করা
+    eeg = request.session.get('current_eeg', None)
+    
+    if eeg:
+        # EEG Wave / Stress অনুযায়ী বায়ো-মেট্রিক্স রিয়েল-টাইম হিসাব
+        high_beta = eeg.get('beta_uv', 24)
+        
+        # হাই বিটা তরঙ্গ থাকলে স্ট্রেস ও হার্ট রেট কিছুটা বৃদ্ধি পাবে
+        heart_rate = 72 + int(high_beta * 0.5)
+        spo2 = 98 if high_beta < 30 else 96
+        body_temp = 36.8
+        
+        if high_beta > 35:
+            stress_level = "HIGH"
+        elif high_beta > 22:
+            stress_level = "MODERATE"
+        else:
+            stress_level = "LOW"
+    else:
+        # ডিফল্ট স্পেস-মিশন ভাইটালস ডাটা
+        heart_rate = 84
+        spo2 = 98
+        body_temp = 36.6
+        stress_level = "LOW"
+
     context = {
-        'heart_rate': 74,
-        'spo2': 98,
-        'body_temp': 36.8,
-        'stress_level': 'Low',
+        'heart_rate': heart_rate,
+        'spo2': spo2,
+        'body_temp': body_temp,
+        'stress_level': stress_level,
     }
     return render(request, 'metrics.html', context)
 

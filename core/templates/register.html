@@ -4,35 +4,40 @@
     .login-card {
         background: rgba(15, 23, 42, 0.85);
         backdrop-filter: blur(20px);
-        border: 1px solid var(--primary-cyan);
+        border: 1px solid #00e5ff;
         border-radius: 16px;
-        padding: 35px;
-        box-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+        padding: 24px;
+        box-shadow: 0 0 35px rgba(0, 229, 255, 0.2);
+    }
+    @media (min-width: 768px) {
+        .login-card {
+            padding: 35px;
+        }
     }
     .cyber-input {
         background: rgba(3, 7, 18, 0.9) !important;
-        border: 1px solid rgba(0, 240, 255, 0.4) !important;
-        color: #00F0FF !important;
+        border: 1px solid rgba(0, 229, 255, 0.4) !important;
+        color: #00e5ff !important;
         font-family: 'Rajdhani', sans-serif;
-        font-size: 1.1rem;
-        padding: 12px 16px;
+        font-size: 1rem;
+        padding: 10px 14px;
         border-radius: 8px;
     }
     .cyber-input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
 </style>
 
-<div class="row justify-content-center pt-3">
-    <div class="col-md-5">
+<div class="row justify-content-center pt-2 pt-md-3">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
         <div class="login-card text-center">
             <div class="mb-4">
-                <i class="bi bi-person-plus-fill text-neon fs-1 mb-2"></i>
-                <h4 class="text-neon fw-bold mb-1" style="font-family: 'Orbitron';">NEW ASTRONAUT REGISTRATION</h4>
-                <p class="text-white-50 fs-6">Create credentials for NeuroGuard clearance</p>
+                <i class="bi bi-person-plus-fill text-info fs-1 mb-2"></i>
+                <h4 class="text-info fw-bold mb-1" style="font-family: 'Orbitron';">NEW ASTRONAUT REGISTRATION</h4>
+                <p class="text-white-50 small mb-0">Create credentials for NeuroGuard clearance</p>
             </div>
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-danger bg-danger bg-opacity-20 border-danger text-danger text-start fs-6 mb-3">
+                    <div class="alert alert-danger bg-danger bg-opacity-20 border-danger text-danger text-start small mb-3">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
                     </div>
                 {% endfor %}
@@ -52,13 +57,13 @@
                 <div class="mb-4">
                     <input type="password" name="confirm_password" class="form-control cyber-input" placeholder="Confirm Clearance Key" required>
                 </div>
-                <button type="submit" class="hud-btn w-100 py-3 fs-6 mb-3">
+                <button type="submit" class="btn btn-info font-monospace w-100 py-3 fw-bold text-dark mb-3" style="background:#00e5ff; border:none;">
                     <i class="bi bi-check-circle-fill me-2"></i>CREATE ACCOUNT & INITIALIZE
                 </button>
             </form>
 
             <div class="border-top border-secondary pt-3 mt-2">
-                <p class="text-white-50 mb-0">Already registered? <a href="{% url 'login' %}" class="text-neon text-decoration-none fw-bold">Login Here</a></p>
+                <p class="text-white-50 small mb-0">Already registered? <a href="{% url 'login' %}" class="text-info text-decoration-none fw-bold">Login Here</a></p>
             </div>
         </div>
     </div>

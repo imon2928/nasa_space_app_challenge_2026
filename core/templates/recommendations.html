@@ -2,20 +2,25 @@
 {% load static %}
 
 {% block content %}
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <style>
-    .recom-card {
-        background: rgba(12, 20, 36, 0.85);
+    .recom-card-modern {
+        background: rgba(12, 20, 36, 0.75);
         border: 1px solid rgba(168, 85, 247, 0.3);
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: 14px;
+        padding: 22px;
         height: 100%;
         backdrop-filter: blur(12px);
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
     }
-    .recom-card:hover {
-        border-color: rgba(0, 229, 255, 0.6);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 229, 255, 0.15);
+    .recom-card-modern:hover {
+        border-color: rgba(0, 229, 255, 0.8);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 229, 255, 0.25);
     }
     .nasa-badge {
         background: rgba(6, 182, 212, 0.15);
@@ -27,11 +32,20 @@
         border-radius: 4px;
     }
     .protocol-step {
-        background: rgba(3, 8, 18, 0.6);
+        background: rgba(3, 8, 18, 0.7);
         border-left: 3px solid #10b981;
-        padding: 10px 14px;
+        padding: 12px 14px;
         margin-bottom: 8px;
-        border-radius: 0 6px 6px 0;
+        border-radius: 0 8px 8px 0;
+    }
+    #recom-three-container {
+        width: 100%;
+        height: 240px;
+        border-radius: 14px;
+        background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, rgba(3, 7, 18, 0.95) 90%);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        position: relative;
+        overflow: hidden;
     }
 </style>
 
@@ -41,7 +55,7 @@
         <h3 class="font-monospace fw-bold text-white mb-0">
             <i class="bi bi-lightbulb-fill text-warning me-2"></i>NEURO-HEALTH COUNTERMEASURES
         </h3>
-        <small class="text-secondary">NASA HRP & Neuroscience Open Data Prescriptions</small>
+        <small class="text-secondary font-monospace">NASA HRP & Neuroscience Open Data Prescriptions</small>
     </div>
     <div class="d-flex gap-2">
         <span class="badge bg-black text-info border border-info px-3 py-2 font-monospace">
@@ -50,23 +64,36 @@
     </div>
 </div>
 
-<!-- CURRENT CONDITION SUMMARY HUD -->
-<div class="hud-card mb-4" style="border-color: rgba(168, 85, 247, 0.5);">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <span class="text-uppercase font-monospace text-warning fw-bold d-block mb-1" style="font-size: 0.75rem;">
-                ● ACTIVE BRAINWAVE DIAGNOSIS
-            </span>
-            <h4 class="text-white font-monospace fw-bold mb-2">{{ eeg.condition|default:"Alpha Synchrony State" }}</h4>
-            <p class="text-light small mb-0" style="line-height: 1.5;">
-                {{ eeg.recommendation }}
-            </p>
+<!-- 3D INTERACTIVE COUNTERMEASURE CORE & DIAGNOSIS -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-5">
+        <div id="recom-three-container">
+            <div class="position-absolute top-0 start-0 p-3 z-3">
+                <span class="badge bg-black text-purple border border-purple font-monospace" style="color:#a855f7;">3D NEURO-STIMULATION CORE</span>
+                <small class="text-secondary font-monospace d-block" style="font-size:0.6rem;">Interactive Audio & Frequency Calibration</small>
+            </div>
         </div>
-        <div class="col-md-4 text-md-end mt-3 mt-md-0">
-            <div class="d-inline-block p-3 rounded text-center" style="background: rgba(3, 8, 18, 0.8); border: 1px solid rgba(0, 229, 255, 0.3);">
-                <small class="text-secondary d-block font-monospace" style="font-size: 0.65rem;">NEURO-HEALTH SCORE</small>
-                <div class="display-6 font-monospace text-success fw-boldlh-1 mb-0">{{ eeg.neuro_score|default:84 }}</div>
-                <small class="text-success font-monospace" style="font-size:0.7rem;">STATUS: NOMINAL</small>
+    </div>
+    <div class="col-lg-7">
+        <div class="hud-card h-100 d-flex flex-column justify-content-between" style="border-color: rgba(168, 85, 247, 0.5);">
+            <div>
+                <span class="text-uppercase font-monospace text-warning fw-bold d-block mb-1" style="font-size: 0.75rem;">
+                    ● ACTIVE BRAINWAVE DIAGNOSIS
+                </span>
+                <h4 class="text-white font-monospace fw-bold mb-2">{{ eeg.condition|default:"Alpha Synchrony State" }}</h4>
+                <p class="text-light small mb-0" style="line-height: 1.6;">
+                    {{ eeg.recommendation|default:"Maintain steady hydration and light cycles. Neural alpha synchrony indicates optimal cognitive readiness for extravehicular tasks." }}
+                </p>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-secondary flex-wrap gap-2">
+                <div>
+                    <small class="text-secondary font-monospace d-block" style="font-size: 0.65rem;">NEURO-HEALTH SCORE</small>
+                    <span class="display-6 font-monospace text-success fw-bold me-2">{{ eeg.neuro_score|default:84 }}</span>
+                    <span class="badge bg-success-subtle text-success font-monospace">STATUS: NOMINAL</span>
+                </div>
+                <button class="btn btn-sm btn-outline-info font-monospace" onclick="triggerBoostAnimation()">
+                    <i class="bi bi-lightning-charge me-1"></i> TEST STIMULATION WAVE
+                </button>
             </div>
         </div>
     </div>
@@ -74,17 +101,16 @@
 
 <!-- NASA & NEUROSCIENCE COUNTERMEASURE CARDS GRID -->
 <div class="row g-3">
-
-    <!-- 1. NEURO-STIMULATION & SOUND PROTOCOL -->
+    <!-- 1. NEURO-STIMULATION -->
     <div class="col-12 col-md-6 col-xl-4">
-        <div class="recom-card d-flex flex-column justify-content-between">
+        <div class="recom-card-modern d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <i class="bi bi-headphones text-info fs-3"></i>
                     <span class="nasa-badge">NASA HRP-001</span>
                 </div>
                 <h5 class="text-white font-monospace fw-bold">Binaural Neuro-Stimulation</h5>
-                <p class="text-secondary small mb-3">Auditory frequencyentrainment to force target neural oscillations during fatigue or hyper-arousal.</p>
+                <p class="text-secondary small mb-3">Auditory frequency entrainment to force target neural oscillations during fatigue or hyper-arousal.</p>
                 
                 <div class="protocol-step">
                     <div class="text-white fw-bold font-monospace" style="font-size:0.75rem;">Prescription Protocol:</div>
@@ -99,7 +125,7 @@
 
     <!-- 2. CIRCADIAN LIGHTING CONTROL -->
     <div class="col-12 col-md-6 col-xl-4">
-        <div class="recom-card d-flex flex-column justify-content-between">
+        <div class="recom-card-modern d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <i class="bi bi-sun-fill text-warning fs-3"></i>
@@ -121,10 +147,10 @@
 
     <!-- 3. SENSORIMOTOR RE-CALIBRATION -->
     <div class="col-12 col-md-6 col-xl-4">
-        <div class="recom-card d-flex flex-column justify-content-between">
+        <div class="recom-card-modern d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <i class="bi bi-arrows-move text-purple fs-3" style="color:#a855f7;"></i>
+                    <i class="bi bi-arrows-move fs-3" style="color:#a855f7;"></i>
                     <span class="nasa-badge">NASA SENSORIMOTOR</span>
                 </div>
                 <h5 class="text-white font-monospace fw-bold">Microgravity Proprioception</h5>
@@ -136,14 +162,14 @@
                 </div>
             </div>
             <div class="mt-3 pt-2 border-top border-secondary text-end">
-                <span class="text-purple font-monospace" style="font-size:0.7rem; color:#a855f7;"><i class="bi bi-check-all me-1"></i> Routine Active</span>
+                <span class="font-monospace" style="font-size:0.7rem; color:#a855f7;"><i class="bi bi-check-all me-1"></i> Routine Active</span>
             </div>
         </div>
     </div>
 
     <!-- 4. NUTRITIONAL NEURO-PROTECTION -->
     <div class="col-12 col-md-6 col-xl-6">
-        <div class="recom-card">
+        <div class="recom-card-modern">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <i class="bi bi-capsule text-danger fs-3"></i>
                 <span class="nasa-badge">NASA NUTRITION DATA</span>
@@ -170,7 +196,7 @@
 
     <!-- 5. AUTONOMIC RESPIRATORY PACING -->
     <div class="col-12 col-md-12 col-xl-6">
-        <div class="recom-card">
+        <div class="recom-card-modern">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <i class="bi bi-wind text-success fs-3"></i>
                 <span class="nasa-badge">BIOFEEDBACK PROTOCOL</span>
@@ -184,7 +210,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- FOOTER BACK TO DASHBOARD -->
@@ -193,4 +218,73 @@
         <i class="bi bi-arrow-left me-2"></i> RETURN TO MAIN DASHBOARD
     </a>
 </div>
+
+<!-- Three.js Visualizer Script -->
+<script>
+    let crystalMesh, ringGroup;
+    let boostTrigger = false;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById('recom-three-container');
+        if (!container) return;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.z = 3.8;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Core Octahedron Crystal
+        const crystalGeo = new THREE.OctahedronGeometry(1.1, 0);
+        const crystalMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true, transparent: true, opacity: 0.8 });
+        crystalMesh = new THREE.Mesh(crystalGeo, crystalMat);
+        scene.add(crystalMesh);
+
+        // Orbit Rings Group
+        ringGroup = new THREE.Group();
+        for (let i = 0; i < 3; i++) {
+            const ringGeo = new THREE.TorusGeometry(1.6 + i * 0.2, 0.015, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.4 - i * 0.1 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / (2 + i);
+            ring.rotation.y = Math.PI / (3 + i);
+            ringGroup.add(ring);
+        }
+        scene.add(ringGroup);
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let speed = boostTrigger ? 0.04 : 0.008;
+            crystalMesh.rotation.y += speed;
+            crystalMesh.rotation.x += speed * 0.5;
+
+            ringGroup.rotation.z += 0.003;
+            ringGroup.rotation.y += 0.005;
+
+            if (boostTrigger) {
+                crystalMesh.scale.set(1.2, 1.2, 1.2);
+            } else {
+                crystalMesh.scale.set(1, 1, 1);
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    });
+
+    function triggerBoostAnimation() {
+        boostTrigger = true;
+        setTimeout(() => { boostTrigger = false; }, 2000);
+    }
+</script>
 {% endblock %}

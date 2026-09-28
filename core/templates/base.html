@@ -6,16 +6,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neuro-Health | Real-Time Neuro Monitoring For Astronauts</title>
+    
+    <!-- BOOTSTRAP & FONTS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- THREE.JS GLOBAL LIBRARIES -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
         :root {
             --bg-main: #030812;
-            --card-bg: rgba(8, 16, 28, 0.85);
+            --card-bg: rgba(6, 14, 26, 0.75);
             --neon-blue: #00e5ff;
             --neon-green: #10b981;
             --neon-purple: #a855f7;
@@ -24,18 +27,32 @@
 
         body {
             background-color: var(--bg-main);
-            background-image: radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.1), transparent 70%),
-                linear-gradient(rgba(3, 8, 18, 0.92), rgba(3, 8, 18, 0.95)),
-                url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80');
-            background-attachment: fixed;
-            background-size: cover;
             color: #f8fafc;
             font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* 1. TOP HEADER BANNER WITH SPACE BACKGROUND */
+        /* 3D BACKGROUND CANVAS */
+        #bg3dCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* GLASS-MORPHISM HUD CARDS */
+        .hud-card, .metric-box, .threejs-brain-card {
+            backdrop-filter: blur(12px);
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+        }
+
+        /* 1. TOP HEADER BANNER */
         .top-header {
             background-image: linear-gradient(180deg, rgba(3, 8, 18, 0.5) 0%, rgba(3, 8, 18, 0.92) 100%),
             url("{% static 'images/topbar_space_bg.jpg' %}");
@@ -50,6 +67,7 @@
             right: 0;
             z-index: 1050;
             min-height: 70px;
+            backdrop-filter: blur(8px);
         }
 
         .brand-logo-text {
@@ -90,7 +108,7 @@
         /* 2. SIDEBAR STYLING */
         .sidebar {
             width: 240px;
-            background: rgba(4, 10, 20, 0.95);
+            background: rgba(4, 10, 20, 0.88);
             border-right: 1px solid var(--border-glow);
             position: fixed;
             top: 70px;
@@ -102,6 +120,7 @@
             flex-direction: column;
             justify-content: space-between;
             overflow-y: auto;
+            backdrop-filter: blur(12px);
             transition: all 0.3s ease;
         }
 
@@ -135,16 +154,7 @@
             transition: all 0.3s ease;
         }
 
-        .hud-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-glow);
-            border-radius: 10px;
-            padding: 14px;
-            backdrop-filter: blur(12px);
-            position: relative;
-        }
-
-        /* 📱 MOBILE RESPONSIVE MEDIA QUERIES */
+        /* MOBILE RESPONSIVE */
         @media (max-width: 991px) {
             .sidebar {
                 position: relative;
@@ -187,7 +197,10 @@
 
 <body>
 
-    <!-- 1. TOP HEADER BANNER WITH SPACE BACKGROUND & USER HUD -->
+    <!-- GLOBAL 3D BACKGROUND CANVAS -->
+    <canvas id="bg3dCanvas"></canvas>
+
+    <!-- 1. TOP HEADER BANNER WITH USER HUD -->
     <div class="top-header d-flex flex-wrap justify-content-between align-items-center gap-2">
 
         <!-- BRAND LOGO & TITLE -->
@@ -195,15 +208,12 @@
             <i class="bi bi-brain text-info fs-3"></i>
             <div>
                 <div class="brand-logo-text">Neuro-<span>Health</span></div>
-                <small class="text-secondary d-none d-sm-block" style="font-size: 0.6rem; letter-spacing: 1px;">FOR A
-                    SAFER TOMORROW IN SPACE</small>
+                <small class="text-secondary d-none d-sm-block" style="font-size: 0.6rem; letter-spacing: 1px;">FOR A SAFER TOMORROW IN SPACE</small>
             </div>
             <div class="vr mx-2 text-secondary d-none d-md-block" style="height: 25px;"></div>
             <div class="d-none d-md-block">
-                <small class="text-secondary font-monospace d-block" style="font-size:0.65rem;">REAL-TIME NEURO
-                    MONITORING</small>
-                <small class="text-info font-monospace" style="font-size:0.6rem;">MONITOR | PREDICT | PREVENT |
-                    PERFORM</small>
+                <small class="text-secondary font-monospace d-block" style="font-size:0.65rem;">REAL-TIME NEURO MONITORING</small>
+                <small class="text-info font-monospace" style="font-size:0.6rem;">MONITOR | PREDICT | PREVENT | PERFORM</small>
             </div>
         </div>
 
@@ -213,13 +223,12 @@
             <!-- LIVE INDICATOR & UTC TIME -->
             <div class="d-flex align-items-center gap-2 gap-md-3 font-monospace text-light">
                 <span class="d-flex align-items-center gap-1" style="font-size: 0.75rem; color: #10b981;">
-                    <span class="spinner-grow spinner-grow-sm text-success" role="status"
-                        style="width: 7px; height: 7px;"></span>
+                    <span class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 7px; height: 7px;"></span>
                     LIVE
                 </span>
                 <div class="border-start border-secondary ps-2 ps-md-3" style="font-size: 0.7rem; line-height: 1.3;">
-                    <div class="text-white" id="utc-date">Jul 07, 2026</div>
-                    <div class="text-secondary" id="utc-time">14:32:18 (UTC)</div>
+                    <div class="text-white" id="utc-date">Sep 28, 2026</div>
+                    <div class="text-secondary" id="utc-time">22:00:00 (UTC)</div>
                 </div>
             </div>
 
@@ -235,8 +244,7 @@
                         </span>
                         <i class="bi bi-chevron-down text-secondary" style="font-size: 0.7rem;"></i>
                     </div>
-                    <small class="text-secondary font-monospace d-block"
-                        style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                    <small class="text-secondary font-monospace d-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">
                         Mission: Deep Space
                     </small>
                 </div>
@@ -249,32 +257,25 @@
     <div class="sidebar">
         <div>
             <nav class="mb-2">
-                <a href="{% url 'dashboard' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'dashboard' %}" class="nav-item-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-house-door-fill"></i> Dashboard
                 </a>
-                <a href="{% url 'eeg_test' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'eeg_test' %}active{% endif %}">
+                <a href="{% url 'eeg_test' %}" class="nav-item-link {% if request.resolver_match.url_name == 'eeg_test' %}active{% endif %}">
                     <i class="bi bi-activity"></i> EEG Test
                 </a>
-                <a href="{% url 'reaction_test' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'reaction_test' %}active{% endif %}">
+                <a href="{% url 'reaction_test' %}" class="nav-item-link {% if request.resolver_match.url_name == 'reaction_test' %}active{% endif %}">
                     <i class="bi bi-controller"></i> Reaction Test
                 </a>
-                <a href="{% url 'metrics' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'metrics' %}active{% endif %}">
+                <a href="{% url 'metrics' %}" class="nav-item-link {% if request.resolver_match.url_name == 'metrics' %}active{% endif %}">
                     <i class="bi bi-heart-pulse-fill"></i> Metrics
                 </a>
-                <a href="{% url 'risk' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'risk' %}active{% endif %}">
+                <a href="{% url 'risk' %}" class="nav-item-link {% if request.resolver_match.url_name == 'risk' %}active{% endif %}">
                     <i class="bi bi-bar-chart-line-fill"></i> Risk
                 </a>
-                <a href="{% url 'recommendations' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'recommendations' %}active{% endif %}">
+                <a href="{% url 'recommendations' %}" class="nav-item-link {% if request.resolver_match.url_name == 'recommendations' %}active{% endif %}">
                     <i class="bi bi-lightbulb-fill"></i> Recommendations
                 </a>
-                <a href="{% url 'settings' %}"
-                    class="nav-item-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                <a href="{% url 'settings' %}" class="nav-item-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
                     <i class="bi bi-gear-fill"></i> Settings
                 </a>
             </nav>
@@ -282,24 +283,16 @@
 
         <!-- SIDEBAR BOTTOM IMAGE SECTION -->
         <div class="border-top border-secondary pt-2 text-center sidebar-bottom-img">
-            <div class="position-relative overflow-hidden rounded mb-2 border border-secondary"
-                style="border-color: rgba(0, 229, 255, 0.2) !important;">
-
-                <!-- v=2 কোয়েরি যুক্ত করে ব্রাউজার ক্যাশ বাইপাস করা হলো -->
-                <img src="{% static 'images/eeg1.png' %}?v=2" alt="Space Astronaut" class="img-fluid rounded"
-                    style="width: 100%; height: 120px; object-fit: cover;">
-
-                <div class="position-absolute bottom-0 start-0 end-0 p-2 text-start"
-                    style="background: linear-gradient(to top, rgba(3, 8, 18, 0.95), transparent);">
-                    <small class="text-white font-monospace fw-bold d-block"
-                        style="font-size: 0.6rem; letter-spacing: 1px; border-left: 2px solid #00e5ff; padding-left: 6px;">
+            <div class="position-relative overflow-hidden rounded mb-2 border border-secondary" style="border-color: rgba(0, 229, 255, 0.2) !important;">
+                <img src="{% static 'images/eeg1.png' %}?v=2" alt="Space Astronaut" class="img-fluid rounded" style="width: 100%; height: 120px; object-fit: cover;">
+                <div class="position-absolute bottom-0 start-0 end-0 p-2 text-start" style="background: linear-gradient(to top, rgba(3, 8, 18, 0.95), transparent);">
+                    <small class="text-white font-monospace fw-bold d-block" style="font-size: 0.6rem; letter-spacing: 1px; border-left: 2px solid #00e5ff; padding-left: 6px;">
                         HUMAN MINDS<br>FURTHER TOMORROW
                     </small>
                 </div>
             </div>
 
-            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm w-100 mt-1 font-monospace"
-                style="font-size:0.7rem;">LOGOUT</a>
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm w-100 mt-1 font-monospace" style="font-size:0.7rem;">LOGOUT</a>
         </div>
     </div>
 
@@ -325,6 +318,70 @@
         }
         setInterval(updateUTCTime, 1000);
         updateUTCTime();
+    </script>
+
+    <!-- GLOBAL THREE.JS 3D PARTICLES BACKGROUND SCRIPT -->
+    <script>
+        const bgCanvas = document.getElementById('bg3dCanvas');
+        if (bgCanvas) {
+            const bgScene = new THREE.Scene();
+            const bgCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            bgCamera.position.z = 5;
+
+            const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            bgRenderer.setPixelRatio(window.devicePixelRatio);
+
+            // 1200+ NEURAL DUST PARTICLES
+            const particleGeo = new THREE.BufferGeometry();
+            const count = 1200;
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 15;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.025,
+                color: 0x00e5ff,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const particleMesh = new THREE.Points(particleGeo, particleMat);
+            bgScene.add(particleMesh);
+
+            // MOUSE TRACKING INTERACTION
+            let mouseX = 0, mouseY = 0;
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 0.5;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 0.5;
+            });
+
+            // ANIMATION LOOP
+            function animateBG() {
+                requestAnimationFrame(animateBG);
+
+                // Smooth Camera Tilting
+                bgCamera.position.x += (mouseX - bgCamera.position.x) * 0.05;
+                bgCamera.position.y += (-mouseY - bgCamera.position.y) * 0.05;
+                bgCamera.lookAt(bgScene.position);
+
+                particleMesh.rotation.y += 0.001;
+                particleMesh.rotation.x += 0.0005;
+
+                bgRenderer.render(bgScene, bgCamera);
+            }
+            animateBG();
+
+            // RESIZE EVENT HANDLER
+            window.addEventListener('resize', () => {
+                bgCamera.aspect = window.innerWidth / window.innerHeight;
+                bgCamera.updateProjectionMatrix();
+                bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
     </script>
 
 </body>
