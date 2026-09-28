@@ -1,24 +1,112 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
+import base64
+import logging
 import random
+
+import cv2
+import numpy as np
+from django.contrib import messages
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.urls import reverse
+
+from .face_auth import REQUIRED_HITS, get_face_info, recognize_face
+from .models import AstronautProfile, DailyNeuroCheck
+
+logger = logging.getLogger(__name__)
+
+
+def _handle_face_frame(request):
+    """একটি ক্যামেরা ফ্রেম যাচাই করে; যথেষ্ট নিশ্চিত হলে সার্ভারেই লগইন করিয়ে দেয়।"""
+    image_data = request.POST.get('image', '')
+    if ';base64,' not in image_data:
+        return JsonResponse({'success': False, 'message': 'NO IMAGE FRAME RECEIVED'})
+
+    try:
+        imgstr = image_data.split(';base64,', 1)[1]
+        frame = cv2.imdecode(np.frombuffer(base64.b64decode(imgstr), np.uint8), cv2.IMREAD_COLOR)
+    except Exception:
+        frame = None
+
+    if frame is None:
+        return JsonResponse({'success': False, 'message': 'INVALID FRAME RECEIVED'})
+
+    try:
+        status, face_id, score = recognize_face(frame)
+    except (FileNotFoundError, RuntimeError) as exc:
+        # মডেল/ছবি/ভার্সন সমস্যা — স্ক্যান চালিয়ে যাওয়ার মানে নেই
+        return JsonResponse({'success': False, 'fatal': True, 'message': str(exc)})
+    except Exception:
+        logger.exception('Face recognition failed')
+        return JsonResponse({'success': False, 'message': 'FACE ENGINE ERROR'})
+
+    if status != 'ok':
+        request.session['face_candidate'] = None
+        request.session['face_hits'] = 0
+        message = 'NO FACE DETECTED' if status == 'no_face' else f'FACE UNKNOWN (SCORE {score:.2f})'
+        return JsonResponse({'success': False, 'message': message})
+
+    # একই ব্যক্তি টানা REQUIRED_HITS বার মিললে তবেই লগইন (এক ফ্রেমের ভুল মিল ঠেকাতে)
+    if request.session.get('face_candidate') == face_id:
+        hits = request.session.get('face_hits', 0) + 1
+    else:
+        hits = 1
+    request.session['face_candidate'] = face_id
+    request.session['face_hits'] = hits
+
+    if hits < REQUIRED_HITS:
+        return JsonResponse({
+            'success': False,
+            'pending': True,
+            'message': f'VERIFYING... ({hits}/{REQUIRED_HITS})',
+        })
+
+    info = get_face_info(face_id)
+
+    try:
+        profile = AstronautProfile.objects.select_related('user').get(astronaut_id=face_id)
+        user = profile.user
+    except AstronautProfile.DoesNotExist:
+        user, created = User.objects.get_or_create(username=face_id)
+        if created:
+            user.set_unusable_password()
+            user.save()
+        profile, _ = AstronautProfile.objects.get_or_create(
+            user=user,
+            astronaut_id=face_id,
+            defaults={"full_name": info['name'], "role": "Mission Specialist"},
+        )
+
+    if not user.is_active:
+        return JsonResponse({'success': False, 'message': 'ACCOUNT DISABLED'})
+
+    login(request, user)
+    request.session.pop('face_candidate', None)
+    request.session.pop('face_hits', None)
+    request.session['astronaut_id'] = profile.astronaut_id
+    request.session['full_name'] = profile.full_name
+    request.session['matched_image_name'] = info['name']
+
+    return JsonResponse({
+        'success': True,
+        'full_name': profile.full_name,
+        'image_name': info['name'],
+        'image_file': info['filename'],
+        'match_score': round(score * 100, 1),
+        'redirect_url': reverse('dashboard'),
+    })
+
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
 
-    if request.method == "POST":
-        astronaut_id = request.POST.get("astronaut_id")
-        password = request.POST.get("password")
-        user = authenticate(request, username=astronaut_id, password=password)
-        if user is not None:
-            login(request, user)
-            request.session['astronaut_id'] = astronaut_id
-            return redirect('dashboard')
-        else:
-            messages.error(request, "Invalid Astronaut ID or Key!")
+    # শুধু AJAX ক্যামেরা ফ্রেম গ্রহণ করা হয়।
+    # ব্রাউজার থেকে পাঠানো কোনো "detected id" আর বিশ্বাস করা হয় না।
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return _handle_face_frame(request)
 
     return render(request, 'login.html')
 
@@ -29,6 +117,7 @@ def register_view(request):
 
     if request.method == "POST":
         astronaut_id = request.POST.get("astronaut_id")
+        full_name = request.POST.get("full_name")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
 
@@ -41,8 +130,16 @@ def register_view(request):
             return render(request, 'register.html')
 
         user = User.objects.create_user(username=astronaut_id, password=password)
+        AstronautProfile.objects.create(
+            user=user,
+            astronaut_id=astronaut_id,
+            full_name=full_name,
+            role="Mission Specialist"
+        )
+
         login(request, user)
         request.session['astronaut_id'] = astronaut_id
+        request.session['full_name'] = full_name
         return redirect('dashboard')
 
     return render(request, 'register.html')
@@ -56,14 +153,22 @@ def logout_view(request):
 
 @login_required(login_url='login')
 def dashboard(request):
+    try:
+        profile = request.user.astronautprofile
+    except AstronautProfile.DoesNotExist:
+        profile = None
+
     eeg = request.session.get('current_eeg', None)
-    rxn = request.session.get('current_rxn', 280.0)
-    
+    rxn = request.session.get('current_rxn', profile.baseline_rxn_ms if profile else 280.0)
+
     context = {
+        'profile': profile,
         'eeg': eeg,
         'rxn': rxn,
         'has_tested': True if eeg else False
     }
+    # ম্যাচ হওয়া ছবির নাম/ফাইল (face_info.name, face_info.filename, face_info.file)
+    context['face_info'] = get_face_info(profile.astronaut_id) if profile else None
     return render(request, 'dashboard.html', context)
 
 
@@ -73,20 +178,18 @@ def reaction_test(request):
         rxn_time = float(request.POST.get("avg_rxn_time", 280.0))
         sleep_hours = float(request.POST.get("sleep_hours", 7.5))
         stress_level = int(request.POST.get("stress_level", 3))
-        
+
         request.session['current_rxn'] = rxn_time
         request.session['sleep_hours'] = sleep_hours
         request.session['stress_level'] = stress_level
         return redirect('eeg_test')
-        
+
     return render(request, 'reaction_test.html')
 
 
 @login_required(login_url='login')
 def eeg_test(request):
-    # আপনার ডকুমেন্টের ৫টি ব্রেইন ওয়েভের নিখুঁত ডাটাবেজ
     eeg_database = [
-        # 1. DELTA WAVE (0.5 – 4 Hz)
         {
             "condition": "Delta Dominance (Deep Sleep / Recovery)",
             "dominant_freq": "2.5 Hz (Delta)",
@@ -101,9 +204,8 @@ def eeg_test(request):
             "concentration_score": 0, "concentration_desc": "Absent",
             "delta_uv": 65, "theta_uv": 15, "alpha_uv": 10, "beta_uv": 5, "gamma_uv": 2,
             "fatigue_risk": "Low", "cognitive_risk": "Low", "eva_readiness": "Off-Duty",
-            "recommendation": "Off-Duty / Rest Period. Maintain uninterrupted sleep window. Avoid abrupt wake-ups during high Delta phase."
+            "recommendation": "Off-Duty / Rest Period. Maintain uninterrupted sleep window."
         },
-        # 2. THETA WAVE (4 – 8 Hz)
         {
             "condition": "Theta Dominance (High Neuro-Fatigue)",
             "dominant_freq": "5.8 Hz (Theta)",
@@ -118,9 +220,8 @@ def eeg_test(request):
             "concentration_score": 41, "concentration_desc": "Low concentration; highly susceptible to microsleeps",
             "delta_uv": 20, "theta_uv": 58, "alpha_uv": 15, "beta_uv": 10, "gamma_uv": 4,
             "fatigue_risk": "High", "cognitive_risk": "Moderate", "eva_readiness": "Hold / Caution",
-            "recommendation": "SUSPEND CRITICAL DUTIES: Suspend high-risk EVA or docking maneuvers. Execute a mandatory 20-min power nap or binaural-beat therapy."
+            "recommendation": "SUSPEND CRITICAL DUTIES: Execute a mandatory 20-min power nap or binaural-beat therapy."
         },
-        # 3. ALPHA WAVE (8 – 12 Hz)
         {
             "condition": "Alpha Synchrony (Nominal / Calm Alertness)",
             "dominant_freq": "10.2 Hz (Alpha)",
@@ -135,9 +236,8 @@ def eeg_test(request):
             "concentration_score": 88, "concentration_desc": "Sustainable, fatigue-free concentration over long duration",
             "delta_uv": 12, "theta_uv": 18, "alpha_uv": 38, "beta_uv": 20, "gamma_uv": 8,
             "fatigue_risk": "Low", "cognitive_risk": "Low", "eva_readiness": "Ready (Nominal)",
-            "recommendation": "Mission Ready: Ideal for routine Intravehicular Activities (IVA), payload maintenance, and communication. Maintain hydration."
+            "recommendation": "Mission Ready: Ideal for routine Intravehicular Activities (IVA) and payload maintenance."
         },
-        # 4. BETA WAVE (12 – 30 Hz)
         {
             "condition": "Beta Dominance (Active Cognition / High Task)",
             "dominant_freq": "22.5 Hz (Beta)",
@@ -152,9 +252,8 @@ def eeg_test(request):
             "concentration_score": 90, "concentration_desc": "Intense, sharp concentration for task execution",
             "delta_uv": 8, "theta_uv": 12, "alpha_uv": 18, "beta_uv": 48, "gamma_uv": 15,
             "fatigue_risk": "Moderate", "cognitive_risk": "Low", "eva_readiness": "Active High-Task",
-            "recommendation": "Active High-Task Operations: Excellent for critical diagnostics and manual alignment. If Beta persists >2 hrs, practice breathing exercises."
+            "recommendation": "Active High-Task Operations: Excellent for critical diagnostics and manual alignment."
         },
-        # 5. GAMMA WAVE (30 – 100 Hz)
         {
             "condition": "Gamma Peak Performance (Flow State)",
             "dominant_freq": "40.0 Hz (Gamma)",
@@ -169,34 +268,45 @@ def eeg_test(request):
             "concentration_score": 99, "concentration_desc": "Maximum cognitive concentration",
             "delta_uv": 5, "theta_uv": 8, "alpha_uv": 12, "beta_uv": 25, "gamma_uv": 50,
             "fatigue_risk": "Low", "cognitive_risk": "Very Low", "eva_readiness": "Peak Clearance (EVA Ready)",
-            "recommendation": "Peak Performance Clearance: Prime window for high-risk EVAs, orbital docking simulations, or emergency response maneuvers."
+            "recommendation": "Peak Performance Clearance: Prime window for high-risk EVAs and orbital docking simulations."
         }
     ]
-    
+
     if request.method == "POST":
         selected_eeg = random.choice(eeg_database)
         request.session['current_eeg'] = selected_eeg
+
+        try:
+            profile = request.user.astronautprofile
+            rxn = request.session.get('current_rxn', profile.baseline_rxn_ms)
+            deviation = ((rxn - profile.baseline_rxn_ms) / profile.baseline_rxn_ms) * 100
+
+            DailyNeuroCheck.objects.create(
+                astronaut=profile,
+                mean_rxn_ms=rxn,
+                rxn_deviation_pct=round(deviation, 2),
+                eeg_condition=selected_eeg['condition'],
+                neuro_health_score=selected_eeg['neuro_score'],
+                mission_readiness=selected_eeg['eva_readiness']
+            )
+        except Exception as e:
+            print("DailyNeuroCheck Save Error:", e)
+
         return redirect('dashboard')
-        
+
     return render(request, 'eeg_test.html')
 
 
-# core/views.py
-
 @login_required(login_url='login')
 def metrics_view(request):
-    # সেশন থেকে বর্তমান EEG টেস্টের ডাটা ফেচ করা
     eeg = request.session.get('current_eeg', None)
-    
+
     if eeg:
-        # EEG Wave / Stress অনুযায়ী বায়ো-মেট্রিক্স রিয়েল-টাইম হিসাব
         high_beta = eeg.get('beta_uv', 24)
-        
-        # হাই বিটা তরঙ্গ থাকলে স্ট্রেস ও হার্ট রেট কিছুটা বৃদ্ধি পাবে
         heart_rate = 72 + int(high_beta * 0.5)
         spo2 = 98 if high_beta < 30 else 96
         body_temp = 36.8
-        
+
         if high_beta > 35:
             stress_level = "HIGH"
         elif high_beta > 22:
@@ -204,7 +314,6 @@ def metrics_view(request):
         else:
             stress_level = "LOW"
     else:
-        # ডিফল্ট স্পেস-মিশন ভাইটালস ডাটা
         heart_rate = 84
         spo2 = 98
         body_temp = 36.6
@@ -222,7 +331,6 @@ def metrics_view(request):
 @login_required(login_url='login')
 def risk_view(request):
     eeg = request.session.get('current_eeg', None)
-    
     context = {
         'has_tested': True if eeg else False,
         'eeg': eeg,
@@ -234,11 +342,10 @@ def risk_view(request):
 def settings_view(request):
     return render(request, 'settings.html')
 
+
 @login_required(login_url='login')
 def recommendations_view(request):
     eeg = request.session.get('current_eeg', None)
-    
-    # টেস্ট দেওয়া না থাকলে ডিফল্ট একটা আলফা প্রোটোকল সেট থাকবে
     if not eeg:
         eeg = {
             "condition": "Alpha Synchrony (Nominal State)",
@@ -247,7 +354,7 @@ def recommendations_view(request):
             "fatigue_risk": "Low",
             "recommendation": "Continue current routine. Maintain hydration, regular breaks and light exposure as per schedule."
         }
-        
+
     context = {
         'eeg': eeg,
         'has_tested': True if request.session.get('current_eeg') else False
