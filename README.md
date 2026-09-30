@@ -30,15 +30,14 @@
 
 NeuroHealth is a Django-based web application developed for the **NASA International Space Apps Challenge 2026**. It combines signal processing (EEG analysis with MNE-Python), machine learning (scikit-learn), and interactive data visualization to <<describe the core purpose: detect stress/fatigue, visualize brain activity, support mental-health monitoring, etc.>>.
 
-**Problem:** <<2–3 sentences on the problem you are solving.>>
+**Problem:** <<Attention Span, Descision Making, Sleep, and other neurological problems >>
 
-**Solution:** <<2–3 sentences on how NeuroHealth solves it.>>
-
+**Solution:** <<Detect the problem, take actions based on risk factors>>
 ## 🚀 Challenge Addressed
 
-- **Challenge name:** <<Exact challenge title from spaceappschallenge.org>>
-- **Challenge link:** <<URL>>
-- **Why it matters:** <<Link your solution to space health, remote monitoring, or Earth-observation impact.>>
+- **Challenge name:** << Create Health Monitoring Software for Astronauts on Space Missions >>
+- **Challenge link:** <<[URL](https://www.spaceappschallenge.org/2026/challenges/create-health-monitoring-software-for-astronauts-on-space-missions/)>>
+- **Why it matters:** <<[Link your solution to space health, remote monitoring, or Earth-observation impact.](https://neuro-health.onrender.com)>>
 
 ## ✨ Key Features
 
@@ -48,7 +47,6 @@ NeuroHealth is a Django-based web application developed for the **NASA Internati
 - 👤 **User accounts and profiles** via Django authentication
 - 🙂 **Face-based login** (OpenCV webcam capture matched against enrolled images) — *remove if not in this repo*
 - ☁️ **Cloud-ready deployment** (Gunicorn + WhiteNoise, Procfile included)
-- <<Add or remove features>>
 
 ## 🛠 Tech Stack
 
@@ -148,22 +146,26 @@ Checklist before going live:
 
 | Name | Role | GitHub |
 |---|---|---|
-| Md. Imon Hossain | <<Role>> | [@imon2928](https://github.com/imon2928) |
-| <<Teammate>> | <<Role>> | <<link>> |
+| Md. Imon Hossain | <<Researcher & Developer>> | [@imon2928](https://github.com/imon2928) |
+| Shipon Kumar Kundu | <<Video Editor>> | <<link>> |
+| Farhana Jannat Maria | <<Core Researcher>> | <<link>> |
+| Md Akram Hossain | <<Presenter>> | <<link>> |
+| Jannatul Ferdous | <<Content Developer>> | <<link>> |
+| Sinha Akter | <<Script Writer>> | <<link>> |
 
 ## 🗺 Roadmap
 
 - [ ] <<Planned feature 1>>
 - [ ] <<Planned feature 2>>
-- [ ] Add automated tests and CI (GitHub Actions)
-- [ ] Add screenshots and a demo video
+- [ ] [Add automated tests and CI (GitHub Actions)](https://neuro-health.onrender.com)
+- [ ] [Add screenshots and a demo video](https://youtu.be/hn27wH8_6fY)
 
 ## 🙏 Acknowledgements
 
 - NASA International Space Apps Challenge and its global organizers
 - [MNE-Python](https://mne.tools/) for EEG/MEG analysis
 - Gramfort, A., et al. (2013). *MEG and EEG data analysis with MNE-Python.* Frontiers in Neuroscience, 7, 267.
-- <<Mentors, datasets, or other libraries>>
+- <<NASA Open Data, API>>
 
 ## 📄 License
 
