@@ -1,7 +1,8 @@
 import base64
 import logging
 import random
-
+import os
+import sys
 import cv2
 import numpy as np
 from django.contrib import messages
@@ -17,99 +18,44 @@ from .models import AstronautProfile, DailyNeuroCheck
 
 logger = logging.getLogger(__name__)
 
-
-def _handle_face_frame(request):
-    """একটি ক্যামেরা ফ্রেম যাচাই করে; যথেষ্ট নিশ্চিত হলে সার্ভারেই লগইন করিয়ে দেয়।"""
-    image_data = request.POST.get('image', '')
-    if ';base64,' not in image_data:
-        return JsonResponse({'success': False, 'message': 'NO IMAGE FRAME RECEIVED'})
-
-    try:
-        imgstr = image_data.split(';base64,', 1)[1]
-        frame = cv2.imdecode(np.frombuffer(base64.b64decode(imgstr), np.uint8), cv2.IMREAD_COLOR)
-    except Exception:
-        frame = None
-
-    if frame is None:
-        return JsonResponse({'success': False, 'message': 'INVALID FRAME RECEIVED'})
-
-    try:
-        status, face_id, score = recognize_face(frame)
-    except (FileNotFoundError, RuntimeError) as exc:
-        # মডেল/ছবি/ভার্সন সমস্যা — স্ক্যান চালিয়ে যাওয়ার মানে নেই
-        return JsonResponse({'success': False, 'fatal': True, 'message': str(exc)})
-    except Exception:
-        logger.exception('Face recognition failed')
-        return JsonResponse({'success': False, 'message': 'FACE ENGINE ERROR'})
-
-    if status != 'ok':
-        request.session['face_candidate'] = None
-        request.session['face_hits'] = 0
-        message = 'NO FACE DETECTED' if status == 'no_face' else f'FACE UNKNOWN (SCORE {score:.2f})'
-        return JsonResponse({'success': False, 'message': message})
-
-    # একই ব্যক্তি টানা REQUIRED_HITS বার মিললে তবেই লগইন (এক ফ্রেমের ভুল মিল ঠেকাতে)
-    if request.session.get('face_candidate') == face_id:
-        hits = request.session.get('face_hits', 0) + 1
+def get_absolute_path(relative_path):
+    """PyInstaller (.exe) এবং সাধারণ ডেভেলপমেন্ট দুই ক্ষেত্রেই সঠিক পাথ খুঁজে নেওয়ার ফাংশন"""
+    if getattr(sys, 'frozen', False):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
-        hits = 1
-    request.session['face_candidate'] = face_id
-    request.session['face_hits'] = hits
-
-    if hits < REQUIRED_HITS:
-        return JsonResponse({
-            'success': False,
-            'pending': True,
-            'message': f'VERIFYING... ({hits}/{REQUIRED_HITS})',
-        })
-
-    info = get_face_info(face_id)
-
-    try:
-        profile = AstronautProfile.objects.select_related('user').get(astronaut_id=face_id)
-        user = profile.user
-    except AstronautProfile.DoesNotExist:
-        user, created = User.objects.get_or_create(username=face_id)
-        if created:
-            user.set_unusable_password()
-            user.save()
-        profile, _ = AstronautProfile.objects.get_or_create(
-            user=user,
-            astronaut_id=face_id,
-            defaults={"full_name": info['name'], "role": "Mission Specialist"},
-        )
-
-    if not user.is_active:
-        return JsonResponse({'success': False, 'message': 'ACCOUNT DISABLED'})
-
-    login(request, user)
-    request.session.pop('face_candidate', None)
-    request.session.pop('face_hits', None)
-    request.session['astronaut_id'] = profile.astronaut_id
-    request.session['full_name'] = profile.full_name
-    request.session['matched_image_name'] = info['name']
-
-    return JsonResponse({
-        'success': True,
-        'full_name': profile.full_name,
-        'image_name': info['name'],
-        'image_file': info['filename'],
-        'match_score': round(score * 100, 1),
-        'redirect_url': reverse('dashboard'),
-    })
-
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 def login_view(request):
+    """লগইন ইন্টারফেস বন্ধ রাখা কিন্তু গেস্ট মোডের পেইজ রেন্ডার করা"""
     if request.user.is_authenticated:
         return redirect('dashboard')
 
-    # শুধু AJAX ক্যামেরা ফ্রেম গ্রহণ করা হয়।
-    # ব্রাউজার থেকে পাঠানো কোনো "detected id" আর বিশ্বাস করা হয় না।
-    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return _handle_face_frame(request)
+    if request.method == 'POST':
+        return JsonResponse({
+            'success': False,
+            'fatal': True,
+            'message': 'BIOMETRIC LOGIN IS CURRENTLY DISABLED'
+        })
 
     return render(request, 'login.html')
 
+def guest_login_view(request):
+    """গেস্ট একাউন্ট দিয়ে লগইন করিয়ে সরাসরি ড্যাশবোর্ডে রিডাইরেক্ট করা"""
+    guest_user, created = User.objects.get_or_create(username="Guest_Astronaut")
+    if created:
+        guest_user.set_unusable_password()
+        guest_user.save()
+
+    profile, _ = AstronautProfile.objects.get_or_create(
+        user=guest_user,
+        defaults={"astronaut_id": "Guest", "full_name": "Guest Astronaut", "role": "Visiting Specialist"}
+    )
+
+    login(request, guest_user)
+    request.session['astronaut_id'] = profile.astronaut_id
+    request.session['full_name'] = profile.full_name
+    return redirect('dashboard')
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -144,12 +90,10 @@ def register_view(request):
 
     return render(request, 'register.html')
 
-
 def logout_view(request):
     logout(request)
     request.session.flush()
     return redirect('login')
-
 
 @login_required(login_url='login')
 def dashboard(request):
@@ -167,10 +111,8 @@ def dashboard(request):
         'rxn': rxn,
         'has_tested': True if eeg else False
     }
-    # ম্যাচ হওয়া ছবির নাম/ফাইল (face_info.name, face_info.filename, face_info.file)
     context['face_info'] = get_face_info(profile.astronaut_id) if profile else None
     return render(request, 'dashboard.html', context)
-
 
 @login_required(login_url='login')
 def reaction_test(request):
@@ -185,7 +127,6 @@ def reaction_test(request):
         return redirect('eeg_test')
 
     return render(request, 'reaction_test.html')
-
 
 @login_required(login_url='login')
 def eeg_test(request):
@@ -296,7 +237,6 @@ def eeg_test(request):
 
     return render(request, 'eeg_test.html')
 
-
 @login_required(login_url='login')
 def metrics_view(request):
     eeg = request.session.get('current_eeg', None)
@@ -327,7 +267,6 @@ def metrics_view(request):
     }
     return render(request, 'metrics.html', context)
 
-
 @login_required(login_url='login')
 def risk_view(request):
     eeg = request.session.get('current_eeg', None)
@@ -337,11 +276,9 @@ def risk_view(request):
     }
     return render(request, 'risk.html', context)
 
-
 @login_required(login_url='login')
 def settings_view(request):
     return render(request, 'settings.html')
-
 
 @login_required(login_url='login')
 def recommendations_view(request):
