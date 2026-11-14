@@ -1,0 +1,1 @@
+web: gunicorn neurohealth_project.wsgi

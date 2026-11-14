@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+    #risk-three-canvas {
+        width: 100%;
+        height: 290px;
+        border-radius: 14px;
+        background: radial-gradient(circle at center, rgba(0, 229, 255, 0.12) 0%, rgba(3, 7, 18, 0.98) 90%);
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .risk-source-box {
+        background: rgba(0, 229, 255, 0.06);
+        border-left: 3px solid #00e5ff;
+        padding: 7px 11px;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-top: 8px;
+        line-height: 1.4;
+    }
+    .risk-legend-pill {
+        font-size: 0.72rem;
+        background: rgba(6, 14, 26, 0.85);
+        border: 1px solid rgba(0, 229, 255, 0.25);
+        padding: 5px 12px;
+        border-radius: 20px;
+    }
+</style>
+
+<div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h3 class="font-monospace fw-bold text-white mb-0">
+            <i class="bi bi-shield-check text-info me-2"></i>RISK ASSESSMENT &amp; PREDICTIONS
+        </h3>
+        <small class="text-secondary font-monospace">AI Predictive Analysis Based on Live EEG Spectrum &amp; NASA HRP Models</small>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="risk-legend-pill font-monospace">
+            <span style="color:#00e5ff;">● Blue</span> →
+            <span style="color:#10b981;">● Green (Low)</span> →
+            <span style="color:#f59e0b;">● Yellow (Mod)</span> →
+            <span style="color:#ef4444;">● Red (High)</span>
+        </span>
+        <a href="{% url 'eeg_test' %}" class="btn btn-outline-info font-monospace btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i> RE-RUN EEG TEST
+        </a>
+    </div>
+</div>
+
+{% if not has_tested %}
+<!-- ইইজি টেস্ট না দেওয়া থাকলে মেসেজ -->
+<div class="hud-card text-center py-5 my-4">
+    <i class="bi bi-shield-exclamation text-warning display-1 mb-3"></i>
+    <h4 class="font-monospace text-white fw-bold">NO EEG SPECTRUM DATA EVALUATED</h4>
+    <p class="text-secondary col-md-6 mx-auto mb-4">Risk assessments are generated based on real-time brain wave spectrum analysis and NASA PVT latency benchmarks. Please initiate a test first.</p>
+    <a href="{% url 'reaction_test' %}" class="btn btn-info font-monospace px-4 py-2 fw-bold" style="background:#00e5ff; border:none; color:#030812;">
+        <i class="bi bi-play-circle-fill me-2"></i> INITIATE NEURO-TELEMETRY TEST
+    </a>
+</div>
+
+{% else %}
+
+<!-- 3D HOLOGRAPHIC HAZARD SHIELD VISUALIZER -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div id="risk-three-canvas">
+            <div class="position-absolute top-0 start-0 p-3 z-3">
+                <span class="badge bg-black text-info border border-info font-monospace">3D AI HAZARD SHIELD &amp; DYNAMIC CORE</span>
+                <small class="text-secondary font-monospace d-block" style="font-size:0.65rem;">
+                    Core transitions from Baseline Blue to Risk Spectrum ({{ risk_score|default:18 }}% Index)
+                </small>
+            </div>
+
+            <div class="position-absolute top-0 end-0 p-3 z-3 text-end">
+                <span class="badge font-monospace px-3 py-2" id="riskScoreBadge" style="background: rgba(0,0,0,0.75); border: 1px solid {{ risk_color|default:'#10b981' }}; color: {{ risk_color|default:'#10b981' }};">
+                    OVERALL RISK: {{ risk_score|default:18 }}% ({{ risk_zone|default:"OPTIMAL / LOW RISK" }})
+                </span>
+            </div>
+
+            <div class="position-absolute bottom-0 start-0 p-3 z-3">
+                <small class="text-info font-monospace" style="font-size:0.68rem;">
+                    <i class="bi bi-database-check me-1"></i> Calibrated via NASA HRP BMed &amp; ISS WinSCAT Thresholds
+                </small>
+            </div>
+
+            <div class="position-absolute bottom-0 end-0 p-3 z-3 text-end">
+                <span class="font-monospace fw-bold d-block" id="shieldStatusLabel" style="font-size:0.78rem; color:{{ risk_color|default:'#10b981' }};">
+                    SYSTEM SHIELD: {{ risk_zone|default:"ACTIVE / NOMINAL" }}
+                </span>
+                <small class="text-secondary font-monospace" style="font-size:0.62rem;">EEG Condition: {{ eeg.condition }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ইইজি রিপোর্টের উপর ভিত্তি করে রিস্ক ডাটা ও সায়েন্টিফিক সোর্স -->
+<div class="row g-3">
+    <!-- ১. প্রধান রিস্ক ম্যাট্রিক্স ও ডাটা সোর্স -->
+    <div class="col-lg-7">
+        <div class="hud-card h-100">
+            <span class="font-monospace text-info fw-bold d-block mb-3 text-uppercase" style="letter-spacing: 1px;">
+                <i class="bi bi-bar-chart-line me-1"></i> EEG &amp; NASA DATA-DRIVEN HAZARD EVALUATION
+            </span>
+
+            {% for item in risk_factors %}
+            <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom border-secondary{% endif %}">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-white font-monospace fw-bold">{{ item.title }}</span>
+                    <span class="badge font-monospace px-3 py-2 {% if item.level == 'Low' %}bg-success-subtle text-success border border-success{% elif item.level == 'Moderate' %}bg-warning-subtle text-warning border border-warning{% else %}bg-danger-subtle text-danger border border-danger{% endif %}">
+                        {{ item.level|upper }} ({{ item.score }}%)
+                    </span>
+                </div>
+                <p class="text-light small mb-1" style="font-size:0.8rem;">{{ item.explanation }}</p>
+                <div class="risk-source-box font-monospace">
+                    <strong class="text-info">📡 Data Basis:</strong> {{ item.data_source }}
+                </div>
+            </div>
+            {% empty %}
+            <!-- Fallback যদি কাস্টম লিস্ট না থাকে -->
+            <div class="mb-3 pb-3 border-bottom border-secondary">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-white font-monospace fw-bold">Neuro-Fatigue &amp; Microsleep Risk</span>
+                    <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 border border-success">
+                        {{ eeg.fatigue_risk|default:"Low" }}
+                    </span>
+                </div>
+                <div class="risk-source-box font-monospace">
+                    <strong class="text-info">📡 Data Basis:</strong> Derived from EEG Theta/Beta Power Ratio ({{ eeg.theta_uv }}% / {{ eeg.beta_uv }}%) &amp; NASA Human Research Program (HRP) Behavioral Health Evidence Report.
+                </div>
+            </div>
+
+            <div class="mb-3 pb-3 border-bottom border-secondary">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-white font-monospace fw-bold">Cognitive &amp; Attention Decrement Risk</span>
+                    <span class="badge bg-success-subtle text-success font-monospace px-3 py-2 border border-success">
+                        {{ eeg.cognitive_risk|default:"Low" }}
+                    </span>
+                </div>
+                <div class="risk-source-box font-monospace">
+                    <strong class="text-info">📡 Data Basis:</strong> Derived from Alpha Synchrony ({{ eeg.alpha_uv }}%) &amp; NASA JSC Psychomotor Vigilance Self-Test (PVT) latency benchmarks.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ২. এআই প্রোটোকল ও অপারেশনাল ক্লিয়ারেন্স -->
+    <div class="col-lg-5">
+        <div class="hud-card h-100 d-flex flex-column justify-content-between">
+            <div>
+                <span class="font-monospace text-warning fw-bold d-block mb-3 text-uppercase" style="letter-spacing: 1px;">
+                    <i class="bi bi-lightbulb me-1"></i> AI SAFETY &amp; CLEARANCE SUMMARY
+                </span>
+
+                <div class="p-3 rounded mb-3" style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2);">
+                    <div class="text-white fw-bold font-monospace mb-1" style="font-size:0.85rem;">TELEMETRY EVALUATION:</div>
+                    <p class="text-light small mb-0" style="line-height:1.55;">
+                        {{ eeg.recommendation|default:"Your current EEG spectral power distribution indicates stable neurological status. No immediate fatigue hazards detected." }}
+                    </p>
+                </div>
+
+                <div class="font-monospace text-secondary small">
+                    <div class="mb-2 d-flex justify-content-between">
+                        <span><i class="bi bi-check2-circle text-info me-1"></i> Alpha Peak Stability:</span>
+                        <span class="text-white">{{ eeg.alpha_peak_hz|default:"10.2" }} Hz (Nominal)</span>
+                    </div>
+                    <div class="mb-2 d-flex justify-content-between">
+                        <span><i class="bi bi-check2-circle text-info me-1"></i> Attention Index:</span>
+                        <span class="text-white">{{ eeg.attention_score|default:84 }}/100</span>
+                    </div>
+                    <div class="mb-2 d-flex justify-content-between">
+                        <span><i class="bi bi-check2-circle text-info me-1"></i> EVA Clearance Status:</span>
+                        <span class="text-warning fw-bold">{{ eeg.eva_readiness|default:"READY" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 rounded bg-black bg-opacity-60 font-monospace text-center mt-3" style="border: 1px solid {{ risk_color|default:'#10b981' }}; color: {{ risk_color|default:'#10b981' }};">
+                ● MISSION STATUS: {{ eeg.eva_readiness|default:"SAFE FOR OPERATIONS"|upper }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Three.js 3D Risk Shield & Smooth Color-Shifting Core Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById('risk-three-canvas');
+        if (!container) return;
+
+        const riskScore = parseInt("{{ risk_score|default:18 }}") || 18;
+        const rawFatigue = "{{ eeg.fatigue_risk|default:'Low' }}".toString().toLowerCase();
+
+        // Target color based on risk severity (Green -> Yellow -> Red)
+        let targetColorHex = 0x10b981; // Green (Safe: 0-30%)
+        if (riskScore > 65 || rawFatigue.includes('high')) {
+            targetColorHex = 0xef4444; // Red (Critical: 66-100%)
+        } else if (riskScore > 30 || rawFatigue.includes('mod')) {
+            targetColorHex = 0xf59e0b; // Yellow (Caution: 31-65%)
+        }
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.z = 4;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Initial Baseline Blue Color (#00e5ff) that smoothly transitions to Green/Yellow/Red
+        const startColor = new THREE.Color(0x00e5ff);
+        const endColor = new THREE.Color(targetColorHex);
+
+        // Outer Hologram Shield Mesh
+        const shieldGeo = new THREE.IcosahedronGeometry(1.55, 2);
+        const shieldMat = new THREE.MeshBasicMaterial({
+            color: startColor.clone(),
+            wireframe: true,
+            transparent: true,
+            opacity: 0.42
+        });
+        const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+        scene.add(shieldMesh);
+
+        // Center Glowing Core Sphere (Starts Blue, transitions smoothly to Green / Yellow / Red)
+        const coreGeo = new THREE.SphereGeometry(0.62, 24, 24);
+        const coreMat = new THREE.MeshBasicMaterial({
+            color: startColor.clone(),
+            wireframe: false,
+            transparent: true,
+            opacity: 0.88
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(coreMesh);
+
+        // Core Wireframe Cage
+        const cageGeo = new THREE.SphereGeometry(0.68, 16, 16);
+        const cageMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.35
+        });
+        const cageMesh = new THREE.Mesh(cageGeo, cageMat);
+        coreMesh.add(cageMesh);
+
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            // Smooth color transition from Blue (t=0) to Green/Yellow/Red over 2.5 seconds
+            const lerpFactor = Math.min(1, t / 2.5);
+            coreMat.color.lerpColors(startColor, endColor, lerpFactor);
+            shieldMat.color.lerpColors(startColor, endColor, lerpFactor);
+
+            shieldMesh.rotation.y += 0.003;
+            shieldMesh.rotation.x += 0.002;
+            coreMesh.rotation.y -= 0.012;
+
+            const pulseSpeed = riskScore > 65 ? 4.5 : (riskScore > 30 ? 3.0 : 2.0);
+            const pulse = 1 + Math.sin(t * pulseSpeed) * 0.07;
+            shieldMesh.scale.set(pulse, pulse, pulse);
+            coreMesh.scale.set(pulse, pulse, pulse);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+    /* EEG SCAN CARD WITH GLASSMORPHISM */
+    .eeg-scan-card {
+        background: rgba(8, 16, 28, 0.82);
+        border: 1px solid rgba(0, 229, 255, 0.35);
+        border-radius: 16px;
+        padding: 30px 20px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .eeg-scan-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+    }
+
+    /* 3D CANVAS HOLDER */
+    #eeg-three-container {
+        width: 100%;
+        height: 260px;
+        border-radius: 12px;
+        background: radial-gradient(circle at center, rgba(0, 229, 255, 0.1) 0%, rgba(3, 8, 18, 0.95) 85%);
+        border: 1px solid rgba(0, 229, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* FULLSCREEN LOADING OVERLAY */
+    #eeg-loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(3, 8, 18, 0.96);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(14px);
+    }
+
+    /* WAVE ANIMATION CONTAINER */
+    .wave-container {
+        width: 90%;
+        max-width: 540px;
+        height: 120px;
+        background: rgba(4, 10, 20, 0.85);
+        border: 1px solid rgba(0, 229, 255, 0.4);
+        border-radius: 12px;
+        box-shadow: 0 0 25px rgba(0, 229, 255, 0.2);
+    }
+
+    .progress-bar-loading {
+        width: 340px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill-loading {
+        height: 100%;
+        width: 0%;
+        background: #00e5ff;
+        box-shadow: 0 0 12px #00e5ff;
+        transition: width 0.1s linear;
+    }
+</style>
+
+<!-- MAIN EEG TEST SCANNER INTERFACE -->
+<div class="row justify-content-center py-3">
+    <div class="col-12 col-md-10 col-lg-7 text-center">
+        <div class="eeg-scan-card">
+            
+            <!-- 3D HOLOGRAM BRAIN VISUALIZER CANVAS -->
+            <div id="eeg-three-container" class="mb-3">
+                <div class="position-absolute top-0 start-0 p-3 z-3 text-start">
+                    <span class="badge bg-black text-info border border-info font-monospace">3D NEURAL SCANNER</span>
+                    <small class="text-secondary font-monospace d-block" style="font-size:0.6rem;">Calibrated for Deep Space Telemetry</small>
+                </div>
+            </div>
+
+            <h3 class="font-monospace text-white fw-bold mb-2">NEURAL SPECTRUM ANALYSIS</h3>
+            <p class="text-secondary small col-md-11 mx-auto mb-4" style="line-height: 1.5;">
+                Initiate a multi-channel real-time EEG brainwave spectrum scan to measure Delta, Theta, Alpha, Beta, and Gamma wave ratios for active space mission telemetry.
+            </p>
+
+            <form id="eegScanForm" method="POST" action="{% url 'eeg_test' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-info font-monospace px-5 py-3 fw-bold" style="background:#00e5ff; border:none; color:#030812; font-size:0.9rem; letter-spacing:1px; box-shadow: 0 0 25px rgba(0,229,255,0.4);">
+                    <i class="bi bi-play-circle-fill me-2"></i> INITIATE SCAN SEQUENCE
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- FULLSCREEN CYBERNETIC LOADING OVERLAY WITH EEG/ECG ANIMATION -->
+<div id="eeg-loading-overlay" style="display: none;">
+    <!-- REAL-TIME ANIMATED EEG WAVE CANVAS -->
+    <div class="wave-container mb-4 p-2">
+        <canvas id="ecgWaveCanvas"></canvas>
+    </div>
+
+    <div class="font-monospace text-white fw-bold mb-2" style="font-size: 1.1rem; letter-spacing: 2px;">
+        ARES OS // NEURAL SPECTRUM SCAN IN PROGRESS
+    </div>
+    
+    <div class="font-monospace text-info small mb-3" id="loading-status-text">
+        INITIALIZING ELECTRODES... [0%]
+    </div>
+    
+    <div class="progress-bar-loading mb-3">
+        <div class="progress-fill-loading" id="loading-progress-fill"></div>
+    </div>
+    
+    <small class="text-secondary font-monospace" style="font-size: 0.68rem;">
+        PLEASE MAINTAIN STILLNESS FOR COGNITIVE TELEMETRY ACCURACY
+    </small>
+</div>
+
+<!-- THREE.JS 3D HOLOGRAM SCANNER & ECG ANIMATION SCRIPT -->
+<script>
+    // 1. THREE.JS 3D BRAIN HOLOGRAM SCANNER
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById('eeg-three-container');
+        if (!container) return;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.z = 3.6;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // 3D Brain Outer Mesh
+        const brainGeo = new THREE.IcosahedronGeometry(1.2, 2);
+        const brainMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0.4 });
+        const brainMesh = new THREE.Mesh(brainGeo, brainMat);
+        scene.add(brainMesh);
+
+        // Scanning Ring
+        const ringGeo = new THREE.RingGeometry(1.3, 1.35, 32);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.rotation.x = Math.PI / 2;
+        scene.add(ringMesh);
+
+        let clock = new THREE.Clock();
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            const elapsedTime = clock.getElapsedTime();
+
+            brainMesh.rotation.y += 0.005;
+            brainMesh.rotation.x += 0.002;
+
+            // Scanning Ring movement (Up and Down)
+            ringMesh.position.y = Math.sin(elapsedTime * 2) * 1.1;
+
+            renderer.render(scene, camera);
+        }
+        animate3D();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    });
+
+    // 2. ECG WAVE CANVAS LOGIC
+    const canvas = document.getElementById('ecgWaveCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    function resizeCanvas() {
+        if (canvas.parentElement) {
+            canvas.width = canvas.parentElement.clientWidth - 16;
+            canvas.height = 104;
+        }
+    }
+
+    let step = 0;
+    function drawECG() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Background Grid Lines
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 20) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 20) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        // Live Waveform
+        ctx.beginPath();
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#00e5ff';
+
+        for (let x = 0; x < canvas.width; x++) {
+            let y = canvas.height / 2;
+            let cycle = (x + step) % 110;
+            
+            if (cycle > 40 && cycle < 45) y -= 16;
+            else if (cycle >= 45 && cycle < 50) y += 35;
+            else if (cycle >= 50 && cycle < 55) y -= 42;
+            else if (cycle >= 55 && cycle < 60) y += 12;
+
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        step += 3;
+        requestAnimationFrame(drawECG);
+    }
+
+    // 3. FORM SUBMISSION LOGIC
+    const form = document.getElementById('eegScanForm');
+    const overlay = document.getElementById('eeg-loading-overlay');
+    const statusText = document.getElementById('loading-status-text');
+    const progressFill = document.getElementById('loading-progress-fill');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        overlay.style.display = 'flex'; 
+        resizeCanvas();
+        drawECG(); 
+
+        let progress = 0;
+        const messages = [
+            "CALIBRATING ELECTRODES & NOISE FILTERS...",
+            "CAPTURING BRAINWAVE SPECTRA (DELTA, THETA, ALPHA)...",
+            "ANALYZING CORTICAL AROUSAL INDEX...",
+            "GENERATING PREDICTIVE FATIGUE RISKS...",
+            "FINALIZING COGNITIVE ASSESSMENT REPORT..."
+        ];
+
+        const interval = setInterval(() => {
+            progress += 1;
+            progressFill.style.width = progress + '%';
+            
+            if (progress < 20) statusText.innerText = `${messages[0]} [${progress}%]`;
+            else if (progress < 40) statusText.innerText = `${messages[1]} [${progress}%]`;
+            else if (progress < 65) statusText.innerText = `${messages[2]} [${progress}%]`;
+            else if (progress < 88) statusText.innerText = `${messages[3]} [${progress}%]`;
+            else statusText.innerText = `${messages[4]} [${progress}%]`;
+
+            if (progress >= 100) {
+                clearInterval(interval);
+                form.submit(); 
+            }
+        }, 65); 
+    });
+</script>
+{% endblock %}

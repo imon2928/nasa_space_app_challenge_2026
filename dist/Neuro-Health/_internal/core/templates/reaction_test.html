@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .pvt-container {
+        background: rgba(10, 20, 32, 0.75);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    }
+    @media (min-width: 768px) {
+        .pvt-container {
+            padding: 30px;
+        }
+    }
+    
+    .pvt-screen {
+        background: #000000;
+        border: 2px solid rgba(16, 185, 129, 0.4);
+        border-radius: 8px;
+        height: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+    }
+    @media (min-width: 768px) {
+        .pvt-screen {
+            height: 280px;
+        }
+    }
+
+    .pvt-counter {
+        font-family: 'Orbitron', monospace;
+        font-size: 2.8rem;
+        color: #10B981;
+        text-shadow: 0 0 20px #10B981;
+    }
+    @media (min-width: 768px) {
+        .pvt-counter {
+            font-size: 4rem;
+        }
+    }
+
+    .pvt-warning {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.4rem;
+        color: #EF4444;
+        text-shadow: 0 0 15px #EF4444;
+    }
+</style>
+
+<div class="pvt-container my-3">
+    <!-- STEP 1: NASA ISS SUBJECTIVE QUESTIONNAIRE -->
+    <div id="survey-section">
+        <h4 class="text-success mb-2 fw-bold" style="font-family:'Orbitron';">NASA REACTION SELF-TEST</h4>
+        <p class="text-light opacity-75 mb-4 small">Official ISS Flight Protocol: Enter subjective physiological parameters prior to PVT acquisition.</p>
+        
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <label class="text-success fw-bold mb-2 small">Sleep Duration Last Night (Hours):</label>
+                <input type="number" id="sleep_hours" class="form-control bg-dark text-white border-secondary" value="7.5" step="0.5" min="1" max="14">
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="text-success fw-bold mb-2 small">Perceived Workload & Stress Level (1-10):</label>
+                <input type="range" id="stress_level" class="form-range" min="1" max="10" value="3" oninput="document.getElementById('stress_val').innerText = this.value">
+                <span class="text-white small">Current Rating: <strong id="stress_val" class="text-success">3</strong> / 10</span>
+            </div>
+        </div>
+
+        <button onclick="startPVTModule()" class="btn btn-success font-monospace w-100 py-3 fw-bold mt-4">Initiate Psychomotor Vigilance Test (PVT) ➔</button>
+    </div>
+
+    <!-- STEP 2: NASA PVT REACTION TEST SCREEN -->
+    <div id="pvt-section" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h6 class="text-success mb-0 fw-bold" style="font-family:'Orbitron';">PVT TEST IN PROGRESS</h6>
+            <span class="badge bg-danger text-white border border-danger px-3 py-1" id="trial-badge">Trial 1 of 10</span>
+        </div>
+        
+        <p class="text-light opacity-75 small mb-2">Watch the box. As soon as the counter appears, tap or click immediately.</p>
+
+        <div class="pvt-screen mb-4 p-2 text-center" id="pvt-box" onclick="handlePVTTrigger()">
+            <div id="pvt-prompt" class="text-success fs-6" style="font-family:'Orbitron';">TAP TO START TRIAL 1</div>
+            <div id="pvt-counter" class="pvt-counter" style="display: none;">000</div>
+            <div id="pvt-warning" class="pvt-warning" style="display: none;">FALSE START</div>
+        </div>
+
+        <div class="d-flex justify-content-around text-center text-light opacity-75 small flex-wrap gap-2">
+            <div>Lapses (>500ms): <strong id="lapse-count" class="text-warning">0</strong></div>
+            <div>False Starts: <strong id="false-count" class="text-danger">0</strong></div>
+        </div>
+    </div>
+
+    <!-- HIDDEN FORM SUBMISSION TO DJANGO VIEWS -->
+    <form id="pvt-form" method="POST" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="avg_rxn_time" id="avg_rxn_input">
+        <input type="hidden" name="sleep_hours" id="sleep_input">
+        <input type="hidden" name="stress_level" id="stress_input">
+    </form>
+</div>
+
+<script>
+    let currentTrial = 0;
+    const totalTrials = 10;
+    let rxnTimes = [];
+    let lapses = 0;
+    let falseStarts = 0;
+    
+    let timerState = 'IDLE';
+    let startTime, timerInterval, timeoutId;
+
+    function startPVTModule() {
+        document.getElementById('survey-section').style.display = 'none';
+        document.getElementById('pvt-section').style.display = 'block';
+    }
+
+    function handlePVTTrigger() {
+        if (timerState === 'IDLE') {
+            prepareNextTrial();
+        } else if (timerState === 'WAITING') {
+            clearTimeout(timeoutId);
+            falseStarts++;
+            document.getElementById('false-count').innerText = falseStarts;
+            document.getElementById('pvt-prompt').style.display = 'none';
+            document.getElementById('pvt-warning').style.display = 'block';
+            timerState = 'IDLE';
+            setTimeout(() => {
+                document.getElementById('pvt-warning').style.display = 'none';
+                document.getElementById('pvt-prompt').style.display = 'block';
+                document.getElementById('pvt-prompt').innerText = "FALSE START! TAP TO RETRY";
+            }, 1200);
+        } else if (timerState === 'COUNTING') {
+            let elapsed = Date.now() - startTime;
+            clearInterval(timerInterval);
+            rxnTimes.push(elapsed);
+            
+            if (elapsed > 500) {
+                lapses++;
+                document.getElementById('lapse-count').innerText = lapses;
+            }
+
+            currentTrial++;
+            timerState = 'IDLE';
+
+            if (currentTrial < totalTrials) {
+                document.getElementById('trial-badge').innerText = `Trial ${currentTrial + 1} of 10`;
+                document.getElementById('pvt-counter').innerText = `${elapsed} ms`;
+                setTimeout(() => {
+                    document.getElementById('pvt-counter').style.display = 'none';
+                    document.getElementById('pvt-prompt').style.display = 'block';
+                    document.getElementById('pvt-prompt').innerText = `TRIAL ${currentTrial} DONE. TAP FOR TRIAL ${currentTrial + 1}`;
+                }, 1000);
+            } else {
+                completePVTTest();
+            }
+        }
+    }
+
+    function prepareNextTrial() {
+        timerState = 'WAITING';
+        document.getElementById('pvt-prompt').innerText = "WAIT FOR COUNTER...";
+        let delay = Math.floor(Math.random() * 3000) + 2000;
+
+        timeoutId = setTimeout(() => {
+            timerState = 'COUNTING';
+            document.getElementById('pvt-prompt').style.display = 'none';
+            document.getElementById('pvt-counter').style.display = 'block';
+            startTime = Date.now();
+            
+            timerInterval = setInterval(() => {
+                let now = Date.now() - startTime;
+                document.getElementById('pvt-counter').innerText = now;
+            }, 10);
+        }, delay);
+    }
+
+    function completePVTTest() {
+        let meanRxn = (rxnTimes.reduce((a, b) => a + b, 0) / rxnTimes.length).toFixed(1);
+        document.getElementById('avg_rxn_input').value = meanRxn;
+        document.getElementById('sleep_input').value = document.getElementById('sleep_hours').value;
+        document.getElementById('stress_input').value = document.getElementById('stress_level').value;
+        document.getElementById('pvt-form').submit();
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.code === 'Space' && document.getElementById('pvt-section').style.display !== 'none') {
+            event.preventDefault();
+            handlePVTTrigger();
+        }
+    });
+</script>
+{% endblock %}

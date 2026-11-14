@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .face-login-card {
+        background: rgba(15, 23, 42, 0.88);
+        backdrop-filter: blur(20px);
+        border: 1px solid #ef4444;
+        border-radius: 16px;
+        padding: 36px 24px;
+        box-shadow: 0 0 35px rgba(239, 68, 68, 0.25);
+    }
+
+    .status-badge {
+        font-family: 'Orbitron', monospace;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+    }
+
+    .btn-guest {
+        background: linear-gradient(135deg, #00e5ff 0%, #0088ff 100%);
+        color: #000;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+        border: none;
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+        transition: all 0.3s ease;
+    }
+
+    .btn-guest:hover {
+        background: linear-gradient(135deg, #00ffff 0%, #00aaff 100%);
+        box-shadow: 0 0 25px rgba(0, 229, 255, 0.8);
+        color: #000;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="row justify-content-center pt-4">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+        <div class="face-login-card text-center">
+
+            <div class="mb-4">
+                <i class="bi bi-shield-lock-fill text-danger fs-1 mb-2"></i>
+                <h4 class="text-danger fw-bold mb-1" style="font-family: 'Orbitron';">AUTHENTICATION DISABLED</h4>
+                <p class="text-white-50 small mb-0">Biometric Login Portal Is Currently Offline</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger bg-danger bg-opacity-20 border-danger text-danger text-start small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="p-3 rounded bg-black bg-opacity-60 border border-danger mb-4">
+                <div class="text-danger font-monospace status-badge fw-bold">
+                    ● SYSTEM ACCESS CLOSED
+                </div>
+                <small class="text-secondary font-monospace d-block mt-2" style="font-size:0.75rem;">
+                    Camera scanning and face verification engine have been temporarily disabled.
+                </small>
+            </div>
+
+            <!-- GUEST MODE BUTTON -->
+            <div class="pt-2">
+                <a href="{% url 'guest_login' %}" class="btn btn-guest btn-lg w-100 py-2">
+                    <i class="bi bi-person-check-fill me-2"></i> CONTINUE WITH GUEST MODE
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

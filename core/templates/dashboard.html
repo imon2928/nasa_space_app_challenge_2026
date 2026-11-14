@@ -1,0 +1,940 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  .dash-wrap {
+    color: #f1f5f9;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+  }
+  .top-banner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+  }
+  .status-pill {
+    background: rgba(4, 24, 34, 0.95);
+    border: 1px solid #00ff88;
+    color: #00ff88;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.25);
+  }
+  .env-bar {
+    background: rgba(8, 24, 46, 0.92);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.55fr 1fr;
+    gap: 16px;
+    margin-bottom: 22px;
+    align-items: stretch;
+  }
+  @media (max-width: 1150px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  .col-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    justify-content: space-between;
+  }
+  .neuro-card {
+    background: rgba(8, 22, 42, 0.95);
+    border: 1px solid rgba(0, 240, 255, 0.28);
+    border-radius: 12px;
+    padding: 15px 18px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .neuro-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 240, 255, 0.7);
+  }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .metric-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .metric-score {
+    font-size: 1.55rem;
+    font-weight: 800;
+    font-family: monospace;
+  }
+  .score-denom {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    font-weight: 600;
+  }
+  .metric-bar {
+    width: 100%;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 6px 0 8px 0;
+  }
+  .metric-desc {
+    font-size: 0.82rem;
+    color: #e2e8f0;
+    line-height: 1.42;
+  }
+  .guide-tip {
+    font-size: 0.75rem;
+    color: #67e8f9;
+    margin-top: 6px;
+    background: rgba(0, 229, 255, 0.1);
+    border-left: 2px solid #00e5ff;
+    padding: 5px 9px;
+    border-radius: 5px;
+  }
+
+  /* Sagittal MRI Panel - Clean & Proportional Layout */
+  .mri-panel {
+    background: #060e1f;
+    border: 1px solid rgba(0, 240, 255, 0.45);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mri-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .anat-pill-header {
+    background: rgba(6, 182, 212, 0.15);
+    border: 1px solid #00e5ff;
+    color: #67e8f9;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .mri-viewport {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 430px;
+    background: #02040a;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Cyan HUD Corner Brackets */
+  .mri-viewport::before, .mri-viewport::after {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #22d3ee;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.85;
+  }
+  .mri-viewport::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+  .mri-viewport::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+
+  .mri-mode-btns {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    z-index: 6;
+  }
+  .mri-btn {
+    background: rgba(10, 18, 36, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    color: #f8fafc;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .mri-btn.active {
+    border-color: #22d3ee;
+    color: #22d3ee;
+    background: rgba(6, 182, 212, 0.22);
+  }
+  .mri-hud-right {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    z-index: 6;
+    font-family: monospace;
+    font-size: 0.67rem;
+    color: #67e8f9;
+    text-align: right;
+    line-height: 1.45;
+    pointer-events: none;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.95);
+  }
+  /* Bottom bar inside MRI viewport so legend & hint NEVER overlap */
+  .mri-footer-overlay {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 10px;
+    z-index: 6;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .mri-legend-box {
+    font-family: monospace;
+    font-size: 0.64rem;
+    color: #67e8f9;
+    background: rgba(2, 6, 16, 0.78);
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(34, 211, 238, 0.25);
+  }
+  .mri-hint-box {
+    background: rgba(2, 6, 16, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 4px 9px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    color: #e2e8f0;
+  }
+  .inspector-bar {
+    background: rgba(3, 12, 28, 0.95);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #f8fafc;
+  }
+  .chart-section {
+    background: rgba(8, 22, 42, 0.96);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .range-btn {
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    color: #e0f7fa;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .range-btn.active {
+    background: #00e5ff;
+    color: #020a13;
+  }
+</style>
+
+<div class="container-fluid py-3 dash-wrap">
+  <!-- Greeting & Readiness Status -->
+  <div class="top-banner">
+    <div>
+      <h3 class="fw-bold mb-1 text-white">Welcome, {{ profile.full_name|default:"Astronaut" }}!</h3>
+      <div style="font-size:0.88rem; color:#67e8f9;">
+        Your brain. Our mission. &nbsp;|&nbsp; Dominant Rhythm: <strong class="text-white">{{ eeg.dominant_freq }}</strong>
+      </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <a href="{% url 'reaction_test' %}" class="btn btn-sm btn-outline-info fw-bold px-3 py-2">+ Run New Neuro Check</a>
+      <div class="status-pill">STATUS: ● {{ eeg.eva_readiness|upper }}</div>
+    </div>
+  </div>
+
+  <!-- Mission Environment Context Selector & Guidance -->
+  <div class="env-bar">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="text-info fw-bold" style="font-size:0.85rem;">🛰️ ACTIVE ENVIRONMENT:</span>
+      <form method="GET" class="d-inline">
+        <select name="env" onchange="this.form.submit()" class="form-select form-select-sm bg-dark text-white border-info fw-semibold">
+          {% for item in env_list %}
+            <option value="{{ item }}" {% if item == current_env %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <span class="badge bg-info text-dark fw-bold">{{ env_info.gravity }}</span>
+    </div>
+    <div style="font-size:0.82rem; color:#e2e8f0;">
+      <strong class="text-warning">Hazard:</strong> {{ env_info.hazard }} &nbsp;|&nbsp;
+      <strong class="text-success">Protocol:</strong> {{ env_info.protocol }}
+    </div>
+  </div>
+
+  <!-- Color Legend for Astronaut Self-Assessment -->
+  <div class="d-flex flex-wrap gap-3 mb-3 px-2" style="font-size:0.82rem; color:#f1f5f9;">
+    <span><strong>Status Color Guide:</strong></span>
+    <span style="color:#00ff88; font-weight:600;">● 75–100: Optimal / Mission Ready</span>
+    <span style="color:#ffbb00; font-weight:600;">● 50–74: Moderate Caution / Monitor Fatigue</span>
+    <span style="color:#ff5252; font-weight:600;">● 0–49: Critical Deficit / Rest Required</span>
+  </div>
+
+  <!-- Main 3-Column Grid -->
+  <div class="main-grid">
+    <!-- Left Column: 4 Cognitive Indicators -->
+    <div class="col-stack">
+      <!-- Attention -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title text-info">👁️ Attention</span>
+          <span class="metric-score" style="color:{% if eeg.attention_score >= 75 %}#00ff88{% elif eeg.attention_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.attention_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.attention_score }}%; height:100%; background:{% if eeg.attention_score >= 75 %}#00ff88{% elif eeg.attention_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.attention_desc }}</div>
+        <div class="guide-tip">Measures sustained external focus &amp; ability to detect cockpit alerts.</div>
+      </div>
+
+      <!-- Working Memory -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title" style="color:#c084fc;">🧠 Working Memory</span>
+          <span class="metric-score" style="color:{% if eeg.memory_score >= 75 %}#00ff88{% elif eeg.memory_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.memory_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.memory_score }}%; height:100%; background:{% if eeg.memory_score >= 75 %}#00ff88{% elif eeg.memory_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.memory_desc }}</div>
+        <div class="guide-tip">Capacity to hold &amp; manipulate multi-step checklist procedures.</div>
+      </div>
+
+      <!-- Sleep Quality -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title text-warning">🌙 Sleep Quality</span>
+          <span class="metric-score" style="color:{% if eeg.sleep_score >= 75 %}#00ff88{% elif eeg.sleep_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.sleep_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.sleep_score }}%; height:100%; background:{% if eeg.sleep_score >= 75 %}#00ff88{% elif eeg.sleep_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.sleep_desc }}</div>
+        <div class="guide-tip">Low scores indicate circadian misalignment or daytime Theta intrusion.</div>
+      </div>
+
+      <!-- Decision Making -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title" style="color:#60a5fa;">⚡ Decision Making</span>
+          <span class="metric-score" style="color:{% if eeg.decision_score >= 75 %}#00ff88{% elif eeg.decision_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.decision_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.decision_score }}%; height:100%; background:{% if eeg.decision_score >= 75 %}#00ff88{% elif eeg.decision_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.decision_desc }}</div>
+        <div class="guide-tip">Prefrontal executive control for anomaly troubleshooting.</div>
+      </div>
+    </div>
+
+    <!-- Center Column: Virtual Copy of Your Brain (Exact Sagittal MRI & Circuit Overlay) -->
+    <div class="mri-panel">
+      <div class="mri-header">
+        <div class="fw-bold text-white" style="font-size:1.1rem;">Virtual Copy of Your Brain</div>
+        <span class="anat-pill-header">Anatomical Gyri &amp; Sulci</span>
+      </div>
+
+      <div class="mri-viewport">
+        <div class="mri-mode-btns">
+          <button type="button" class="mri-btn" id="btn-mode-anat" onclick="setBrainViewMode('anatomical')">🧠 MRI Anatomy</button>
+          <button type="button" class="mri-btn active" id="btn-mode-bold" onclick="setBrainViewMode('bold')">🔥 Activation Overlay</button>
+        </div>
+
+        <div class="mri-hud-right" id="mriHudText">
+          SAGITTAL MRI · ACTIVATION OVERLAY<br>
+          ACTIVATION INDEX {{ eeg.neuro_score }}%<br>
+          ALPHA PEAK {{ eeg.alpha_peak_hz }} Hz<br>
+          SUBJECT {{ profile.full_name|default:"Astronaut" }}
+        </div>
+
+        <canvas id="sagittalMriCanvas" style="width:100%; height:100%; display:block; cursor:pointer;"></canvas>
+
+        <!-- Non-overlapping Flexbox Footer inside Viewport -->
+        <div class="mri-footer-overlay">
+          <div class="mri-legend-box">
+            <div>ACTIVATION</div>
+            <div style="width:105px; height:6px; border-radius:3px; margin:2px 0; background:linear-gradient(90deg,#030512,#0c1e78,#196ee6,#28c8e6,#78d2a0,#faaa3c,#fa6e1e,#ffc85a,#fffae1);"></div>
+            <div style="display:flex; justify-content:space-between; width:105px; font-weight:700; color:#e2e8f0;">
+              <span>LOW</span><span>HIGH</span>
+            </div>
+          </div>
+
+          <div class="mri-hint-box">🖱️ Click a region to inspect | Color = activation + neurochemicals</div>
+        </div>
+      </div>
+
+      <div class="inspector-bar">
+        <span id="regionReadout" style="color:#67e8f9; font-weight:600;">🖱️ Click any brain region or pathway above to inspect live telemetry</span>
+        <span style="font-size:0.78rem; color:#e2e8f0; font-family:monospace;">α: {{ eeg.alpha_peak_hz }} Hz</span>
+      </div>
+
+      <!-- Overall Cognitive Health Summary Box -->
+      <div class="d-flex justify-content-between align-items-center px-3 py-2 rounded" style="background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.25);">
+        <div>
+          <div class="small text-uppercase text-info fw-bold">Overall Cognitive Health</div>
+          <div style="font-size:0.82rem; color:#e2e8f0;">PVT Reaction: <strong>{{ rxn|floatformat:0 }} ms</strong> &nbsp;|&nbsp; Hazard Risk: <strong>{{ eeg.overall_risk_pct }}%</strong></div>
+        </div>
+        <div class="fs-2 fw-bold font-monospace" style="color:{% if eeg.neuro_score >= 75 %}#00ff88{% elif eeg.neuro_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+          {{ eeg.neuro_score }}<span style="font-size:0.95rem; color:#cbd5e1;">/100</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: 4 Cognitive Indicators -->
+    <div class="col-stack">
+      <!-- Focus Level -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title" style="color:#fb7185;">🎯 Focus Level</span>
+          <span class="metric-score" style="color:{% if eeg.focus_score >= 75 %}#00ff88{% elif eeg.focus_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.focus_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.focus_score }}%; height:100%; background:{% if eeg.focus_score >= 75 %}#00ff88{% elif eeg.focus_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.focus_desc }}</div>
+        <div class="guide-tip">Measures task-locked Gamma/Beta synchrony during complex operations.</div>
+      </div>
+
+      <!-- Mood & Affective -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title text-info">😊 Mood &amp; Affective</span>
+          <span class="fw-bold fs-5 text-warning">{{ eeg.mood_status }}</span>
+        </div>
+        <div class="metric-desc mt-2">{{ eeg.mood_desc }}</div>
+        <div class="guide-tip">Derived from frontal Alpha asymmetry &amp; Beta stress markers.</div>
+      </div>
+
+      <!-- Sensory-Motor -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title text-warning">🖐️ Sensory-Motor</span>
+          <span class="metric-score" style="color:{% if eeg.sensory_score >= 75 %}#00ff88{% elif eeg.sensory_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.sensory_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.sensory_score }}%; height:100%; background:{% if eeg.sensory_score >= 75 %}#00ff88{% elif eeg.sensory_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.sensory_desc }}</div>
+        <div class="guide-tip">Hand-eye reflex speed critical for robotic arm &amp; rover control.</div>
+      </div>
+
+      <!-- Concentration -->
+      <div class="neuro-card">
+        <div class="card-top">
+          <span class="metric-title text-success">🔬 Concentration</span>
+          <span class="metric-score" style="color:{% if eeg.concentration_score >= 75 %}#00ff88{% elif eeg.concentration_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};">
+            {{ eeg.concentration_score }}<span class="score-denom">/100</span>
+          </span>
+        </div>
+        <div class="metric-bar">
+          <div style="width:{{ eeg.concentration_score }}%; height:100%; background:{% if eeg.concentration_score >= 75 %}#00ff88{% elif eeg.concentration_score >= 50 %}#ffbb00{% else %}#ff5252{% endif %};"></div>
+        </div>
+        <div class="metric-desc">{{ eeg.concentration_desc }}</div>
+        <div class="guide-tip">Resistance to mental fatigue over extended EVA/IVA shifts.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Time-Series Charts (Current vs 7-Day vs 30-Day) -->
+  <div class="chart-section">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <div>
+        <h5 class="fw-bold text-white mb-1">📈 Dynamic Longitudinal Neuro-Health Trends</h5>
+        <div style="font-size:0.84rem; color:#cbd5e1;">Tracks cognitive stability, sleep recovery, and reaction latency over mission timeline</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="range-btn active" onclick="updateChartRange('current', this)">Current Session</button>
+        <button type="button" class="range-btn" onclick="updateChartRange('7d', this)">Last 1 Week (7 Days)</button>
+        <button type="button" class="range-btn" onclick="updateChartRange('30d', this)">Last 1 Month (30 Days)</button>
+      </div>
+    </div>
+    <div style="height:280px;">
+      <canvas id="longitudinalChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // 1. EXACT SAGITTAL MRI BRAIN ENGINE
+  // =========================================================================
+  let mriViewMode = 'bold';
+
+  function setBrainViewMode(mode) {
+    mriViewMode = mode;
+    document.getElementById('btn-mode-anat').classList.toggle('active', mode === 'anatomical');
+    document.getElementById('btn-mode-bold').classList.toggle('active', mode === 'bold');
+    const hud = document.getElementById('mriHudText');
+    if (hud) {
+      const label = mode === 'bold' ? 'ACTIVATION OVERLAY' : 'MRI ANATOMY';
+      hud.innerHTML = `SAGITTAL MRI · ${label}<br>ACTIVATION INDEX {{ eeg.neuro_score }}%<br>ALPHA PEAK {{ eeg.alpha_peak_hz }} Hz<br>SUBJECT {{ profile.full_name|default:"Astronaut" }}`;
+    }
+  }
+
+  (function () {
+    function _h(x, y, z) {
+      const n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453;
+      return n - Math.floor(n);
+    }
+    function _n3(x, y, z) {
+      const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+      const xf = x - xi, yf = y - yi, zf = z - zi;
+      const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+      let r = 0;
+      for (let a = 0; a < 2; a++) {
+        for (let b = 0; b < 2; b++) {
+          for (let c = 0; c < 2; c++) {
+            r += _h(xi + a, yi + b, zi + c) * (a ? u : 1 - u) * (b ? v : 1 - v) * (c ? w : 1 - w);
+          }
+        }
+      }
+      return r;
+    }
+
+    const GW = 300, GH = 240, N = GW * GH, NR = 14;
+    const REG = [
+      ['frontal', 108, 72, 40, 'Frontal Lobe (DLPFC)', {{ eeg.decision_score }}, 'Dopamine & Acetylcholine Optimal'],
+      ['parietal', 185, 56, 36, 'Parietal Lobe (PPC)', {{ eeg.attention_score }}, 'Glutamate & Alpha-Gamma Synchrony'],
+      ['temporal', 112, 114, 24, 'Temporal Lobe', {{ eeg.memory_score }}, 'Acetylcholine & Semantic Encoding'],
+      ['occipital', 234, 94, 30, 'Occipital Lobe (V1)', {{ eeg.focus_score }}, 'Visual Telemetry Nominal'],
+      ['cerebrum', 165, 82, 82, 'Cerebrum (Global Cortex)', {{ eeg.neuro_score }}, 'Balanced Cortical E/I Ratio'],
+      ['thalamus', 166, 108, 15, 'Thalamus (Sensory Relay)', {{ eeg.attention_score }}, 'Thalamocortical Alpha Gating'],
+      ['hypothalamus', 150, 124, 11, 'Hypothalamus (HPA & Circadian)', {{ eeg.sleep_score }}, 'Melatonin & Cortisol Regulated'],
+      ['pituitary', 143, 141, 8, 'Pituitary Gland', {{ eeg.sleep_score }}, 'Neuroendocrine Homeostasis'],
+      ['hippocampus', 192, 124, 13, 'Hippocampus (Memory)', {{ eeg.memory_score }}, 'Theta-Gamma Memory Consolidation'],
+      ['amygdala', 130, 125, 10, 'Amygdala (Salience)', {{ eeg.concentration_score }}, 'Serotonin & GABA Calibrated'],
+      ['midbrain', 172, 139, 12, 'Midbrain (VTA / SNc)', {{ eeg.decision_score }}, 'Mesolimbic Dopamine Tone'],
+      ['pons', 173, 160, 13, 'Pons (Arousal Bridge)', {{ eeg.sleep_score }}, 'REM & NREM Sleep Regulation'],
+      ['medulla', 177, 186, 12, 'Medulla Oblongata', {{ eeg.sensory_score }}, 'Autonomic Cardiorespiratory Control'],
+      ['cerebellum', 214, 146, 32, 'Cerebellum (Motor Loop)', {{ eeg.sensory_score }}, 'Fine Motor & Vestibular Adaptation']
+    ];
+
+    const CIRC = [
+      ['meso', [255, 190, 40], {{ eeg.decision_score }} / 100, [[172, 139, 150, 130, 148, 104], [148, 104, 120, 96, 108, 72]]],
+      ['vis',  [34, 211, 238], {{ eeg.focus_score }} / 100,    [[166, 108, 200, 84, 234, 94]]],
+      ['cere', [96, 165, 250], {{ eeg.sensory_score }} / 100,  [[214, 146, 194, 152, 172, 139], [172, 139, 164, 126, 166, 108]]],
+      ['cen',  [192, 132, 252],{{ eeg.attention_score }} / 100,[[108, 72, 146, 26, 185, 56]]],
+      ['dmn',  [52, 211, 153], {{ eeg.memory_score }} / 100,   [[118, 70, 160, 50, 205, 76], [205, 76, 224, 104, 192, 124]]],
+      ['str',  [248, 113, 113],{{ eeg.sleep_score }} / 100,    [[130, 125, 140, 136, 150, 124], [150, 124, 170, 134, 173, 160]]]
+    ];
+
+    const ST = [
+      [0, [3, 5, 18]], [0.18, [12, 30, 120]], [0.34, [25, 110, 230]],
+      [0.48, [40, 200, 230]], [0.58, [120, 210, 160]], [0.68, [250, 170, 60]],
+      [0.8, [250, 110, 30]], [0.92, [255, 200, 90]], [1, [255, 250, 225]]
+    ];
+    const LUT = new Uint8Array(1024 * 3);
+    for (let i = 0; i < 1024; i++) {
+      const v = i / 1023;
+      let k = 0;
+      while (k < ST.length - 2 && v > ST[k + 1][0]) k++;
+      const a = ST[k], b = ST[k + 1], u = (v - a[0]) / (b[0] - a[0]);
+      for (let c = 0; c < 3; c++) LUT[i * 3 + c] = a[1][c] + (b[1][c] - a[1][c]) * u;
+    }
+
+    const S = new Float32Array(N), CL = new Uint8Array(N), W = new Float32Array(N * NR);
+
+    function buildSagittalAnatomy() {
+      const c = document.createElement('canvas');
+      c.width = GW; c.height = GH;
+      const g = c.getContext('2d');
+      const f = (v, k) => 'rgb(' + Math.round(v * 255) + ',' + k + ',0)';
+      g.fillStyle = 'rgb(0,0,0)';
+      g.fillRect(0, 0, GW, GH);
+
+      const poly = (pts, fill) => {
+        g.fillStyle = fill;
+        g.beginPath();
+        pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]));
+        g.closePath();
+        g.fill();
+      };
+      const ell = (x, y, rx, ry, fill, rot) => {
+        g.fillStyle = fill;
+        g.beginPath();
+        g.ellipse(x, y, rx, ry, rot || 0, 0, 6.2832);
+        g.fill();
+      };
+      const q = (x0, y0, cx, cy, x1, y1, w, s) => {
+        g.strokeStyle = s;
+        g.lineWidth = w;
+        g.lineCap = 'round';
+        g.beginPath();
+        g.moveTo(x0, y0);
+        g.quadraticCurveTo(cx, cy, x1, y1);
+        g.stroke();
+      };
+
+      const soft = f(0.24, 0);
+      ell(172, 98, 108, 92, soft);
+      poly([[80, 60], [62, 98], [54, 122], [42, 136], [56, 146], [58, 158], [52, 166], [60, 174], [64, 192], [86, 206], [116, 212], [124, 150], [120, 70]], soft);
+      poly([[112, 200], [126, 240], [236, 240], [232, 160], [200, 150], [130, 150]], soft);
+
+      // Skull & Cervical Spine
+      g.strokeStyle = f(0.58, 0);
+      g.lineWidth = 4;
+      g.beginPath();
+      g.ellipse(172, 98, 100, 85, 0, 0, 6.2832);
+      g.stroke();
+      g.fillStyle = f(0.55, 0);
+      for (let i = 0; i < 4; i++) g.fillRect(198 + i * 2, 186 + i * 14, 26, 10);
+
+      // Facial Cavities
+      ell(88, 152, 16, 5, f(0.05, 0), 0.35);
+      ell(100, 192, 24, 8, f(0.08, 0));
+      ell(100, 186, 18, 6, f(0.5, 0));
+      ell(100, 128, 12, 9, f(0.06, 0));
+
+      // Cerebral Cortex & Corpus Callosum
+      ell(170, 92, 90, 72, f(0.42, 255));
+      g.strokeStyle = f(0.78, 200);
+      g.lineWidth = 12;
+      g.beginPath();
+      g.ellipse(170, 92, 84, 66, 0, 0, 6.2832);
+      g.stroke();
+      q(128, 98, 166, 58, 202, 100, 8, f(0.06, 255));
+      q(110, 88, 166, 40, 218, 94, 7, f(0.85, 255));
+      q(138, 100, 160, 86, 176, 102, 3, f(0.9, 255));
+
+      // Deep Nuclei
+      ell(166, 110, 14, 10, f(0.8, 255));
+      ell(150, 125, 8, 6, f(0.7, 255));
+      ell(143, 142, 5, 6, f(0.95, 255));
+      ell(130, 126, 7, 6, f(0.72, 255));
+      q(182, 118, 200, 122, 206, 134, 7, f(0.82, 255));
+
+      // Brainstem & Cerebellum Arbor Vitae
+      poly([[158, 128], [188, 126], [190, 150], [194, 170], [190, 196], [186, 240], [170, 240], [168, 200], [160, 174], [152, 160], [154, 140]], f(0.7, 255));
+      ell(166, 160, 16, 14, f(0.88, 255));
+      ell(190, 152, 3, 8, f(0.05, 255));
+      ell(214, 146, 36, 28, f(0.5, 255));
+      for (let k = 1; k <= 7; k++) {
+        g.strokeStyle = f(k % 2 ? 0.95 : 0.3, 255);
+        g.lineWidth = 1.6;
+        g.beginPath();
+        g.ellipse(214, 146, 36 - k * 4.2, 28 - k * 3.3, 0, 0, 6.2832);
+        g.stroke();
+      }
+      g.strokeStyle = f(0.98, 255);
+      g.lineWidth = 1.3;
+      for (let i = -9; i <= 9; i++) {
+        const a = i * 0.14;
+        g.beginPath();
+        g.moveTo(200, 148);
+        g.lineTo(200 + Math.cos(a) * 34, 148 + Math.sin(a) * 26);
+        g.stroke();
+      }
+
+      const d = g.getImageData(0, 0, GW, GH).data;
+      for (let i = 0; i < N; i++) {
+        const x = i % GW, y = (i / GW) | 0, k = d[i * 4 + 1];
+        let s = d[i * 4] / 255;
+        CL[i] = k;
+        if (k > 110 && k < 235) {
+          const n1 = _n3(x * 0.075, y * 0.075, 2.1);
+          const n2 = _n3(x * 0.19, y * 0.19, 5.3);
+          const fo = 0.6 * (1 - Math.pow(Math.abs(2 * n1 - 1), 0.6)) + 0.4 * (1 - Math.pow(Math.abs(2 * n2 - 1), 0.6));
+          s *= 0.45 + 0.75 * fo;
+        }
+        s += (Math.random() - 0.5) * 0.03;
+        S[i] = Math.min(1, Math.max(0, s));
+        for (let r = 0; r < NR; r++) {
+          const R = REG[r], dx = x - R[1], dy = y - R[2];
+          let w = Math.exp(-(dx * dx + dy * dy) / (R[3] * R[3]));
+          if (w < 0.004) w = 0;
+          else {
+            w *= (k > 110 ? 1 : 0.2);
+            if (R[0] === 'cerebrum') w = k > 110 ? w * 0.35 : 0;
+          }
+          W[i * NR + r] = w;
+        }
+      }
+    }
+
+    const oc = document.createElement('canvas');
+    oc.width = GW; oc.height = GH;
+    const octx = oc.getContext('2d'), img = octx.createImageData(GW, GH), px = img.data;
+
+    function computeField(t) {
+      const bold = mriViewMode === 'bold';
+      const gain = bold ? 1.45 : 0.85, base = bold ? 0.3 : 0.48, tm = t * 0.002;
+      for (let p = 0, qx = 0; p < N; p++, qx += 4) {
+        let sw = 0, sa = 0;
+        const b = p * NR;
+        for (let r = 0; r < NR; r++) {
+          const w = W[b + r];
+          if (w) {
+            sw += w;
+            sa += w * (REG[r][5] / 100);
+          }
+        }
+        const den = sw + 0.06, A = sa / den, s = S[p];
+        let v = s * (base + gain * A);
+        v *= 1 + 0.05 * Math.sin(tm * 1.6 + (p % GW) * 0.05 + ((p / GW) | 0) * 0.04) * A;
+        if (CL[p] < 110) v += 0.14 + 0.08 * s;
+        v = v < 0 ? 0 : v > 1 ? 1 : v;
+        const li = ((v * 1023) | 0) * 3;
+        px[qx] = LUT[li];
+        px[qx + 1] = LUT[li + 1];
+        px[qx + 2] = LUT[li + 2];
+        px[qx + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+    }
+
+    const cv = document.getElementById('sagittalMriCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    let last = 0, view = { s: 1, ox: 0, oy: 0 };
+
+    function resizeCanvas() {
+      const p = cv.parentElement, d = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.max(10, p.clientWidth * d);
+      cv.height = Math.max(10, p.clientHeight * d);
+    }
+
+    function drawFrame(t) {
+      requestAnimationFrame(drawFrame);
+      if (t - last < 33) return;
+      last = t;
+      computeField(t);
+
+      const w = cv.width, h = cv.height, bold = mriViewMode === 'bold';
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#02040a';
+      ctx.fillRect(0, 0, w, h);
+
+      const s = Math.min(w / GW, h / GH) * 0.96, ox = (w - GW * s) / 2, oy = (h - GH * s) / 2 - (h * 0.02);
+      view = { s: s, ox: ox, oy: oy };
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(oc, ox, oy, GW * s, GH * s);
+
+      ctx.setTransform(s, 0, 0, s, ox, oy);
+      ctx.globalCompositeOperation = 'lighter';
+
+      // Regional Activation Hotspots
+      REG.forEach(r => {
+        if (r[0] === 'cerebrum') return;
+        const A = r[5] / 100, rad = r[3] * 1.1, al = (bold ? 0.34 : 0.16) * A * A;
+        const gr = ctx.createRadialGradient(r[1], r[2], 0, r[1], r[2], rad);
+        gr.addColorStop(0, 'rgba(255,' + (120 + A * 120 | 0) + ',' + (40 + A * 60 | 0) + ',' + al.toFixed(3) + ')');
+        gr.addColorStop(1, 'rgba(255,120,40,0)');
+        ctx.fillStyle = gr;
+        ctx.beginPath();
+        ctx.arc(r[1], r[2], rad, 0, 6.2832);
+        ctx.fill();
+      });
+
+      // Glowing Neural Circuit Pathways & Traveling Impulses
+      CIRC.forEach(cc => {
+        const lv = Math.max(0.25, cc[2]), col = cc[1].join(',');
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 0.9 + lv * 2.4;
+        ctx.strokeStyle = 'rgba(' + col + ',' + (0.16 + 0.58 * lv).toFixed(3) + ')';
+        cc[3].forEach(sg => {
+          ctx.beginPath();
+          ctx.moveTo(sg[0], sg[1]);
+          ctx.quadraticCurveTo(sg[2], sg[3], sg[4], sg[5]);
+          ctx.stroke();
+        });
+        cc[3].forEach((sg, j) => {
+          for (let n = 0; n < 3; n++) {
+            const u = ((t * 0.0004 * (0.4 + lv) + n / 3 + j * 0.17) % 1), m = 1 - u;
+            const x = m * m * sg[0] + 2 * m * u * sg[2] + u * u * sg[4];
+            const y = m * m * sg[1] + 2 * m * u * sg[3] + u * u * sg[5];
+            const rr = 1.3 + lv * 2.1;
+            ctx.fillStyle = 'rgba(' + col + ',.25)';
+            ctx.beginPath();
+            ctx.arc(x, y, rr * 2.5, 0, 6.2832);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,' + (0.45 + 0.55 * lv).toFixed(2) + ')';
+            ctx.beginPath();
+            ctx.arc(x, y, rr * 0.75, 0, 6.2832);
+            ctx.fill();
+          }
+        });
+      });
+
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    cv.addEventListener('click', (e) => {
+      const b = cv.getBoundingClientRect();
+      const X = ((e.clientX - b.left) * cv.width / b.width - view.ox) / view.s;
+      const Y = ((e.clientY - b.top) * cv.height / b.height - view.oy) / view.s;
+      let best = null, bd = 1e9;
+      REG.forEach(r => {
+        if (r[0] === 'cerebrum') return;
+        const d = Math.hypot(X - r[1], Y - r[2]) / r[3];
+        if (d < bd) { bd = d; best = r; }
+      });
+      if (!best || bd > 1.15) {
+        const xi = Math.round(X), yi = Math.round(Y);
+        if (xi >= 0 && yi >= 0 && xi < GW && yi < GH && CL[yi * GW + xi] > 110) best = REG[4];
+        else return;
+      }
+      document.getElementById('regionReadout').innerHTML =
+        `🧠 <span class="text-warning">${best[4]}</span> | Activation: <span class="text-success">${best[5]}%</span> | ${best[6]}`;
+    });
+
+    buildSagittalAnatomy();
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    requestAnimationFrame(drawFrame);
+  })();
+
+  // =========================================================================
+  // 2. LONGITUDINAL CHARTS (CURRENT / 7 DAYS / 30 DAYS)
+  // =========================================================================
+  const rawHistory = {{ history_json|safe }};
+  const ctxChart = document.getElementById('longitudinalChart').getContext('2d');
+  let trendChart = null;
+
+  function buildChartConfig(range) {
+    if (range === 'current') {
+      return {
+        type: 'bar',
+        data: {
+          labels: ['Attention', 'Working Memory', 'Sleep Quality', 'Decision Making', 'Focus Level', 'Sensory-Motor', 'Concentration'],
+          datasets: [{
+            label: 'Current Session Score (/100)',
+            data: [
+              {{ eeg.attention_score }},
+              {{ eeg.memory_score }},
+              {{ eeg.sleep_score }},
+              {{ eeg.decision_score }},
+              {{ eeg.focus_score }},
+              {{ eeg.sensory_score }},
+              {{ eeg.concentration_score }}
+            ],
+            backgroundColor: ['#00e5ff', '#c084fc', '#ffab00', '#3b82f6', '#fb7185', '#00ff88', '#1de9b6'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e2e8f0' } },
+            x: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: '600' } } }
+          },
+          plugins: { legend: { labels: { color: '#f8fafc' } } }
+        }
+      };
+    }
+
+    const maxDays = range === '7d' ? 7 : 30;
+    let filtered = rawHistory.filter(r => r.days_ago <= maxDays);
+
+    if (filtered.length < 2) {
+      filtered = [
+        { date: 'Day -6', neuro_score: 82, attention: 80, sleep: 76 },
+        { date: 'Day -4', neuro_score: 79, attention: 77, sleep: 72 },
+        { date: 'Day -2', neuro_score: 85, attention: 84, sleep: 81 },
+        { date: 'Latest', neuro_score: {{ eeg.neuro_score }}, attention: {{ eeg.attention_score }}, sleep: {{ eeg.sleep_score }} }
+      ];
+    }
+
+    return {
+      type: 'line',
+      data: {
+        labels: filtered.map(r => r.date),
+        datasets: [
+          {
+            label: 'Overall Neuro Health',
+            data: filtered.map(r => r.neuro_score),
+            borderColor: '#00ff88',
+            backgroundColor: 'rgba(0, 255, 136, 0.14)',
+            fill: true,
+            tension: 0.35
+          },
+          {
+            label: 'Attention Index',
+            data: filtered.map(r => r.attention),
+            borderColor: '#00e5ff',
+            tension: 0.35
+          },
+          {
+            label: 'Sleep Recovery',
+            data: filtered.map(r => r.sleep),
+            borderColor: '#ffab00',
+            tension: 0.35
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e2e8f0' } },
+          x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#f8fafc' } }
+        },
+        plugins: { legend: { labels: { color: '#f8fafc' } } }
+      }
+    };
+  }
+
+  function updateChartRange(range, btn) {
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(ctxChart, buildChartConfig(range));
+  }
+
+  trendChart = new Chart(ctxChart, buildChartConfig('current'));
+</script>
+{% endblock %}

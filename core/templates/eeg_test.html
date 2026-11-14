@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  .vlab-container {
+    background: radial-gradient(circle at top right, #09192b 0%, #030912 100%);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 14px;
+    padding: 20px;
+    color: #e0f7fa;
+    font-family: 'Segoe UI', Roboto, monospace;
+    box-shadow: 0 0 35px rgba(0, 229, 255, 0.08);
+  }
+  .telemetry-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 18px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tele-boxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .tele-card {
+    background: rgba(6, 20, 38, 0.9);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 8px;
+    padding: 8px 16px;
+    min-width: 115px;
+    box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.06);
+  }
+  .tele-label {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    color: #78909c;
+    text-transform: uppercase;
+  }
+  .tele-val {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #00f0ff;
+  }
+  .live-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: #00ff88;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00ff88;
+    margin-right: 6px;
+    animation: pulseLive 1.2s infinite;
+  }
+  @keyframes pulseLive {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+  .vlab-grid {
+    display: grid;
+    grid-template-columns: 2.3fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 992px) {
+    .vlab-grid { grid-template-columns: 1fr; }
+  }
+  .eeg-main-panel {
+    background: #040d19;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    position: relative;
+  }
+  .side-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .sub-panel {
+    background: #051120;
+    border: 1px solid rgba(0, 240, 255, 0.28);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .panel-header {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #4dd0e1;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .band-row {
+    margin-bottom: 10px;
+  }
+  .band-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+  }
+  .band-track {
+    width: 100%;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .band-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.25s ease;
+  }
+  .scan-footer {
+    margin-top: 18px;
+    background: rgba(4, 15, 28, 0.95);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+  }
+  .progress-wrap {
+    flex: 1;
+    min-width: 240px;
+  }
+  .scan-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .scan-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00f0ff, #00ff88);
+    transition: width 0.2s linear;
+  }
+  .btn-neuro-submit {
+    background: linear-gradient(135deg, #00e5ff, #00b8d4);
+    color: #020a13;
+    font-weight: 800;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(0, 229, 255, 0.4);
+    transition: 0.2s;
+  }
+  .btn-neuro-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+  }
+</style>
+
+<div class="container-fluid py-3">
+  <div class="vlab-container">
+    <!-- Top Telemetry Bar -->
+    <div class="telemetry-bar">
+      <div class="tele-boxes">
+        <div class="tele-card">
+          <div class="tele-label">STATUS</div>
+          <div class="tele-val" style="color:#00ff88;"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div class="tele-card">
+          <div class="tele-label">CHANNELS</div>
+          <div class="tele-val">14 (10-20)</div>
+        </div>
+        <div class="tele-card">
+          <div class="tele-label">RATE</div>
+          <div class="tele-val">128 Hz</div>
+        </div>
+        <div class="tele-card">
+          <div class="tele-label">ALPHA PEAK</div>
+          <div class="tele-val" id="alphaPeakDisplay">10.20 Hz</div>
+        </div>
+        <div class="tele-card">
+          <div class="tele-label">IMPEDANCE</div>
+          <div class="tele-val" style="color:#00ff88;">&lt; 5 kOhm</div>
+        </div>
+      </div>
+
+      <div>
+        <select id="simStateSelect" class="form-select form-select-sm bg-dark text-info border-info">
+          <option value="auto">Auto Telemetry (From PVT &amp; Sleep)</option>
+          <option value="alpha">Simulate: Alpha Synchrony (Nominal)</option>
+          <option value="gamma">Simulate: Gamma Flow State</option>
+          <option value="beta">Simulate: High-Beta Task Load</option>
+          <option value="theta">Simulate: Theta Neuro-Fatigue</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Main Virtual Lab Grid -->
+    <div class="vlab-grid">
+      <!-- Left: 14-Channel EEG + PSD Overlay -->
+      <div class="eeg-main-panel">
+        <canvas id="eegWaveCanvas" style="width:100%; height:520px; display:block;"></canvas>
+      </div>
+
+      <!-- Right: 10-20 Scalp Map + FFT Spectral Bands -->
+      <div class="side-panels">
+        <div class="sub-panel text-center">
+          <div class="panel-header"><span class="live-dot"></span> 10-20 SCALP FIELD</div>
+          <canvas id="scalpCanvas" width="240" height="220" style="max-width:100%;"></canvas>
+          <div style="font-size:0.72rem; color:#78909c;">Active Cortical Dipole Topography</div>
+        </div>
+
+        <div class="sub-panel">
+          <div class="panel-header"><span class="live-dot"></span> FAST FOURIER SPECTRAL BANDS</div>
+
+          <div class="band-row">
+            <div class="band-meta"><span>&delta; Delta (0.5–4 Hz)</span><span id="valDelta">12.0%</span></div>
+            <div class="band-track"><div id="barDelta" class="band-fill" style="width:12%; background:#b388ff;"></div></div>
+          </div>
+
+          <div class="band-row">
+            <div class="band-meta"><span>&theta; Theta (4–8 Hz)</span><span id="valTheta">18.0%</span></div>
+            <div class="band-track"><div id="barTheta" class="band-fill" style="width:18%; background:#00e5ff;"></div></div>
+          </div>
+
+          <div class="band-row">
+            <div class="band-meta"><span>&alpha; Alpha (8–13 Hz)</span><span id="valAlpha">38.0%</span></div>
+            <div class="band-track"><div id="barAlpha" class="band-fill" style="width:38%; background:#00ff88;"></div></div>
+          </div>
+
+          <div class="band-row">
+            <div class="band-meta"><span>&beta; Beta (13–30 Hz)</span><span id="valBeta">22.0%</span></div>
+            <div class="band-track"><div id="barBeta" class="band-fill" style="width:22%; background:#ffab00;"></div></div>
+          </div>
+
+          <div class="band-row mb-0">
+            <div class="band-meta"><span>&gamma; Gamma (30–45 Hz)</span><span id="valGamma">10.0%</span></div>
+            <div class="band-track"><div id="barGamma" class="band-fill" style="width:10%; background:#ff5252;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Scan & Form Submission -->
+    <form method="POST" id="eegSubmitForm" class="scan-footer">
+      {% csrf_token %}
+      <input type="hidden" name="delta_uv" id="inputDelta" value="12.0">
+      <input type="hidden" name="theta_uv" id="inputTheta" value="18.0">
+      <input type="hidden" name="alpha_uv" id="inputAlpha" value="38.0">
+      <input type="hidden" name="beta_uv" id="inputBeta" value="22.0">
+      <input type="hidden" name="gamma_uv" id="inputGamma" value="10.0">
+      <input type="hidden" name="alpha_peak" id="inputAlphaPeak" value="10.2">
+
+      <div class="progress-wrap">
+        <div class="d-flex justify-content-between" style="font-size:0.82rem;">
+          <span id="scanStatusText" class="text-info fw-bold">ACQUIRING 14-CHANNEL NEURAL TELEMETRY...</span>
+          <span id="scanPctText" class="text-success fw-bold">0%</span>
+        </div>
+        <div class="scan-bar-bg">
+          <div class="scan-bar-fill" id="scanBarFill"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-neuro-submit" id="completeScanBtn">
+        COMPLETE SCAN &amp; GENERATE TELEMETRY REPORT
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const channels = [
+    { name: 'Fp1', color: '#00e5ff', freq: 10.2, amp: 5.2 },
+    { name: 'Fp2', color: '#00e5ff', freq: 10.0, amp: 6.1 },
+    { name: 'F3',  color: '#00e5ff', freq: 11.5, amp: 5.4 },
+    { name: 'F4',  color: '#00e5ff', freq: 11.8, amp: 6.8 },
+    { name: 'C3',  color: '#00ff88', freq: 13.0, amp: 5.7 },
+    { name: 'Cz',  color: '#00ff88', freq: 12.5, amp: 7.9 },
+    { name: 'C4',  color: '#00ff88', freq: 13.2, amp: 6.1 },
+    { name: 'T3',  color: '#b388ff', freq: 8.5,  amp: 8.4 },
+    { name: 'T4',  color: '#b388ff', freq: 8.8,  amp: 9.8 },
+    { name: 'P3',  color: '#29b6f6', freq: 10.4, amp: 11.2 },
+    { name: 'P4',  color: '#29b6f6', freq: 10.1, amp: 10.8 },
+    { name: 'O1',  color: '#29b6f6', freq: 10.2, amp: 11.5 },
+    { name: 'O2',  color: '#29b6f6', freq: 10.3, amp: 11.1 },
+    { name: 'Oz',  color: '#00e5ff', freq: 10.0, amp: 9.4 }
+  ];
+
+  const waveCanvas = document.getElementById('eegWaveCanvas');
+  const wCtx = waveCanvas.getContext('2d');
+  const scalpCanvas = document.getElementById('scalpCanvas');
+  const sCtx = scalpCanvas.getContext('2d');
+
+  let frame = 0;
+  let scanProgress = 0;
+  const historyLen = 360;
+  const waveBuffers = channels.map(() => new Array(historyLen).fill(0));
+
+  let bands = { delta: 12.0, theta: 18.0, alpha: 38.0, beta: 22.0, gamma: 10.0, alphaPeak: 10.2 };
+
+  function resizeWaveCanvas() {
+    const rect = waveCanvas.getBoundingClientRect();
+    waveCanvas.width = rect.width;
+    waveCanvas.height = 520;
+  }
+  window.addEventListener('resize', resizeWaveCanvas);
+  resizeWaveCanvas();
+
+  function getTargetBands() {
+    const mode = document.getElementById('simStateSelect').value;
+    if (mode === 'gamma') return { delta: 6, theta: 9, alpha: 15, beta: 28, gamma: 42, alphaPeak: 11.4 };
+    if (mode === 'beta')  return { delta: 8, theta: 13, alpha: 19, beta: 44, gamma: 16, alphaPeak: 10.8 };
+    if (mode === 'theta') return { delta: 22, theta: 46, alpha: 16, beta: 11, gamma: 5, alphaPeak: 8.5 };
+    return { delta: 12, theta: 17, alpha: 39, beta: 22, gamma: 10, alphaPeak: 10.2 };
+  }
+
+  function updateBands() {
+    const target = getTargetBands();
+    const jitter = () => (Math.random() - 0.5) * 1.4;
+    bands.delta = Math.max(3, +(target.delta + jitter()).toFixed(1));
+    bands.theta = Math.max(4, +(target.theta + jitter()).toFixed(1));
+    bands.alpha = Math.max(5, +(target.alpha + jitter()).toFixed(1));
+    bands.beta  = Math.max(5, +(target.beta  + jitter()).toFixed(1));
+    bands.gamma = Math.max(2, +(target.gamma + jitter()).toFixed(1));
+    bands.alphaPeak = +(target.alphaPeak + (Math.random() - 0.5) * 0.15).toFixed(2);
+
+    const total = bands.delta + bands.theta + bands.alpha + bands.beta + bands.gamma;
+    const norm = v => +((v / total) * 100).toFixed(1);
+
+    const dP = norm(bands.delta), tP = norm(bands.theta), aP = norm(bands.alpha), bP = norm(bands.beta), gP = norm(bands.gamma);
+
+    document.getElementById('valDelta').textContent = dP + '%';
+    document.getElementById('barDelta').style.width = dP + '%';
+    document.getElementById('valTheta').textContent = tP + '%';
+    document.getElementById('barTheta').style.width = tP + '%';
+    document.getElementById('valAlpha').textContent = aP + '%';
+    document.getElementById('barAlpha').style.width = aP + '%';
+    document.getElementById('valBeta').textContent = bP + '%';
+    document.getElementById('barBeta').style.width = bP + '%';
+    document.getElementById('valGamma').textContent = gP + '%';
+    document.getElementById('barGamma').style.width = gP + '%';
+    document.getElementById('alphaPeakDisplay').textContent = bands.alphaPeak.toFixed(2) + ' Hz';
+
+    document.getElementById('inputDelta').value = dP;
+    document.getElementById('inputTheta').value = tP;
+    document.getElementById('inputAlpha').value = aP;
+    document.getElementById('inputBeta').value = bP;
+    document.getElementById('inputGamma').value = gP;
+    document.getElementById('inputAlphaPeak').value = bands.alphaPeak;
+  }
+
+  function drawPSDInset(w, h) {
+    const boxW = 195, boxH = 68;
+    const x0 = w - boxW - 14, y0 = 12;
+
+    wCtx.fillStyle = 'rgba(3, 14, 28, 0.88)';
+    wCtx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+    wCtx.lineWidth = 1;
+    wCtx.fillRect(x0, y0, boxW, boxH);
+    wCtx.strokeRect(x0, y0, boxW, boxH);
+
+    // Alpha band highlight (8-13Hz)
+    wCtx.fillStyle = 'rgba(179, 136, 255, 0.18)';
+    wCtx.fillRect(x0 + 34, y0 + 16, 24, boxH - 20);
+
+    wCtx.fillStyle = '#80deea';
+    wCtx.font = '10px monospace';
+    wCtx.fillText(`PSD 1-45Hz · α-peak ${bands.alphaPeak}Hz`, x0 + 8, y0 + 12);
+
+    wCtx.beginPath();
+    wCtx.strokeStyle = '#00e5ff';
+    wCtx.lineWidth = 1.4;
+    for (let f = 1; f <= 45; f++) {
+      const px = x0 + 6 + (f / 45) * (boxW - 12);
+      const alphaSpike = Math.exp(-Math.pow(f - bands.alphaPeak, 2) / 1.8) * (bands.alpha * 0.85);
+      const betaSpike = Math.exp(-Math.pow(f - 21, 2) / 6) * (bands.beta * 0.55);
+      const thetaSpike = Math.exp(-Math.pow(f - 6, 2) / 2.5) * (bands.theta * 0.65);
+      const harmonic = Math.abs(Math.sin(f * 1.1 + frame * 0.05)) * 12;
+      const power = Math.min(44, alphaSpike + betaSpike + thetaSpike + harmonic);
+      const py = y0 + boxH - 6 - power;
+      if (f === 1) wCtx.moveTo(px, py);
+      else wCtx.lineTo(px, py);
+    }
+    wCtx.stroke();
+  }
+
+  function drawScalpMap() {
+    const cx = 120, cy = 115, r = 78;
+    sCtx.clearRect(0, 0, 240, 220);
+
+    // Head outline & nose
+    sCtx.strokeStyle = 'rgba(120, 144, 156, 0.55)';
+    sCtx.lineWidth = 3;
+    sCtx.beginPath();
+    sCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    sCtx.stroke();
+
+    sCtx.beginPath();
+    sCtx.moveTo(cx - 12, cy - r);
+    sCtx.lineTo(cx, cy - r - 14);
+    sCtx.lineTo(cx + 12, cy - r);
+    sCtx.stroke();
+
+    // 10-20 Electrode Coordinates
+    const electrodes = [
+      [-26, -54], [26, -54],
+      [-38, -28], [38, -28],
+      [-44, 0],   [0, 0],   [44, 0],
+      [-64, 0],   [64, 0],
+      [-38, 30],  [38, 30],
+      [-24, 54],  [24, 54]
+    ];
+
+    electrodes.forEach(([dx, dy], i) => {
+      const pulse = 6.5 + Math.sin(frame * 0.08 + i) * 1.6;
+      const grad = sCtx.createRadialGradient(cx + dx, cy + dy, 1, cx + dx, cy + dy, pulse * 1.8);
+      grad.addColorStop(0, '#00f0ff');
+      grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+      sCtx.fillStyle = grad;
+      sCtx.beginPath();
+      sCtx.arc(cx + dx, cy + dy, pulse * 1.8, 0, Math.PI * 2);
+      sCtx.fill();
+
+      sCtx.fillStyle = '#00e5ff';
+      sCtx.beginPath();
+      sCtx.arc(cx + dx, cy + dy, 5.5, 0, Math.PI * 2);
+      sCtx.fill();
+    });
+  }
+
+  function renderLoop() {
+    const w = waveCanvas.width;
+    const h = waveCanvas.height;
+    wCtx.fillStyle = '#040d19';
+    wCtx.fillRect(0, 0, w, h);
+
+    // Subtle Grid
+    wCtx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
+    wCtx.lineWidth = 1;
+    for (let x = 75; x < w; x += 45) {
+      wCtx.beginPath(); wCtx.moveTo(x, 0); wCtx.lineTo(x, h); wCtx.stroke();
+    }
+
+    const rowH = (h - 32) / channels.length;
+    const t = frame * 0.09;
+
+    channels.forEach((ch, idx) => {
+      const yBase = 18 + idx * rowH + rowH / 2;
+      const signal =
+        Math.sin(t * (ch.freq * 0.35) + idx) * (ch.amp * 0.65) +
+        Math.sin(t * 2.1 + idx * 1.7) * 2.4 +
+        (Math.random() - 0.5) * 2.2;
+
+      waveBuffers[idx].push(signal);
+      if (waveBuffers[idx].length > historyLen) waveBuffers[idx].shift();
+
+      // Label + live uV
+      const liveUv = (ch.amp + Math.sin(t + idx) * 1.2).toFixed(1);
+      wCtx.fillStyle = '#78909c';
+      wCtx.font = '11px monospace';
+      wCtx.fillText(`${ch.name} ${liveUv}µV`, 8, yBase + 4);
+
+      // Waveform
+      wCtx.beginPath();
+      wCtx.strokeStyle = ch.color;
+      wCtx.lineWidth = 1.35;
+      const plotW = w - 95;
+      for (let i = 0; i < waveBuffers[idx].length; i++) {
+        const px = 82 + (i / historyLen) * plotW;
+        const py = yBase + waveBuffers[idx][i];
+        if (i === 0) wCtx.moveTo(px, py);
+        else wCtx.lineTo(px, py);
+      }
+      wCtx.stroke();
+    });
+
+    // Bottom status overlay
+    wCtx.fillStyle = '#546e7a';
+    wCtx.font = '11px monospace';
+    wCtx.fillText(`ACQ STREAMING | FRAME ${String(frame).padStart(6, '0')}`, 12, h - 8);
+    wCtx.fillStyle = '#ff5252';
+    wCtx.beginPath(); wCtx.arc(w - 135, h - 12, 4, 0, Math.PI * 2); wCtx.fill();
+    wCtx.fillStyle = '#80deea';
+    wCtx.fillText(`REC 128Hz | EEG`, w - 125, h - 8);
+
+    drawPSDInset(w, h);
+    if (frame % 3 === 0) drawScalpMap();
+    if (frame % 18 === 0) updateBands();
+
+    // Auto progress bar up to 100%
+    if (scanProgress < 100) {
+      scanProgress = Math.min(100, scanProgress + 0.35);
+      const pct = Math.floor(scanProgress);
+      document.getElementById('scanBarFill').style.width = pct + '%';
+      document.getElementById('scanPctText').textContent = pct + '%';
+      if (pct === 100) {
+        document.getElementById('scanStatusText').textContent = 'SCAN COMPLETE — READY TO GENERATE TELEMETRY REPORT';
+        document.getElementById('scanStatusText').classList.replace('text-info', 'text-success');
+      }
+    }
+
+    frame++;
+    requestAnimationFrame(renderLoop);
+  }
+
+  renderLoop();
+</script>
+{% endblock %}

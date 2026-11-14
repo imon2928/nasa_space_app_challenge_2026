@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  .pvt-wrap {
+    background: radial-gradient(circle at center, rgba(12, 24, 44, 0.92) 0%, rgba(3, 8, 18, 0.98) 100%);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    color: #e0f7fa;
+    backdrop-filter: blur(12px);
+  }
+  .nasa-ref-box {
+    background: rgba(6, 182, 212, 0.1);
+    border-left: 4px solid #00e5ff;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #b2ebf2;
+    margin-bottom: 18px;
+  }
+  .game-arena {
+    position: relative;
+    width: 100%;
+    height: 330px;
+    background: radial-gradient(circle at center, #071930 0%, #020813 100%);
+    border: 2px solid rgba(0, 240, 255, 0.35);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: crosshair;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .radar-ring {
+    position: absolute;
+    border: 1px dashed rgba(0, 240, 255, 0.18);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .thruster-target {
+    position: absolute;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #00ff88 0%, #00b8d4 75%, transparent 100%);
+    box-shadow: 0 0 30px #00ff88;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #020a13;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 0.85rem;
+    cursor: pointer;
+    animation: targetPulse 0.38s infinite alternate;
+  }
+  @keyframes targetPulse {
+    from { transform: scale(0.95); }
+    to { transform: scale(1.06); }
+  }
+  .hud-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  @media (max-width: 768px) {
+    .hud-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  .hud-box {
+    background: rgba(6, 14, 26, 0.85);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .hud-label { font-size: 0.68rem; color: #94a3b8; font-family: monospace; text-transform: uppercase; }
+  .hud-val { font-size: 1.25rem; font-weight: 800; color: #00f0ff; font-family: monospace; }
+</style>
+
+<div class="container py-3">
+  <div class="pvt-wrap">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="font-monospace fw-bold text-white mb-0">
+          <i class="bi bi-joystick text-info me-2"></i>NASA PVT — ORBITAL THRUSTER REACTION GAME
+        </h3>
+        <small class="text-secondary font-monospace">Visuomotor Vigilance &amp; Micro-Lapse Assessment Module</small>
+      </div>
+      <span class="badge bg-info text-dark font-monospace fw-bold px-3 py-2">5 TRIALS PROTOCOL</span>
+    </div>
+
+    <!-- NASA Data Source Reference -->
+    <div class="nasa-ref-box">
+      <strong><i class="bi bi-satellite me-1"></i> NASA Open Data &amp; Scientific Reference:</strong> Adapted from the <em>NASA Johnson Space Center (JSC) Psychomotor Vigilance Self-Test (PVT)</em> &amp; <em>Spaceflight Cognitive Assessment Tool for Windows (WinSCAT)</em> deployed aboard the International Space Station (ISS) to quantify circadian fatigue and attention lapses (&gt;500 ms response latency) [Ref: Basner &amp; Dinges, NASA HRP Behavioral Health &amp; Performance].
+    </div>
+
+    <form method="POST" id="pvtForm">
+      {% csrf_token %}
+      <input type="hidden" name="avg_rxn_time" id="inputAvgRxn" value="280">
+      <input type="hidden" name="pvt_lapses" id="inputLapses" value="0">
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small text-info font-monospace fw-bold">LAST SLEEP CYCLE DURATION (HOURS)</label>
+          <input type="number" step="0.5" min="0" max="14" name="sleep_hours" value="7.5" class="form-control bg-dark text-white border-info font-monospace" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small text-info font-monospace fw-bold">CURRENT WORKLOAD / STRESS INDEX (1–5)</label>
+          <select name="stress_level" class="form-select bg-dark text-white border-info font-monospace">
+            <option value="1">1 — Calm / Nominal</option>
+            <option value="2" selected>2 — Light Operational Load</option>
+            <option value="3">3 — Moderate Task Demand</option>
+            <option value="4">4 — High Alert / EVA Prep</option>
+            <option value="5">5 — Critical / Emergency Load</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Interactive Space Game Arena -->
+      <div class="game-arena" id="gameArena" onclick="handleArenaClick(event)">
+        <div class="radar-ring" style="width:140px; height:140px;"></div>
+        <div class="radar-ring" style="width:260px; height:260px;"></div>
+        <div class="radar-ring" style="width:380px; height:380px;"></div>
+
+        <div id="arenaPrompt" class="text-center px-3">
+          <h5 class="text-white font-monospace fw-bold mb-2">ORBITAL DOCKING THRUSTER CALIBRATION</h5>
+          <p class="small text-secondary mb-3">Click the glowing green <strong class="text-success">FIRE</strong> beacon the instant it appears on radar. Clicking prematurely logs a False Start.</p>
+          <button type="button" class="btn btn-info font-monospace fw-bold px-4" onclick="startPvtGame(event)">
+            <i class="bi bi-play-fill me-1"></i> START TELEMETRY TEST
+          </button>
+        </div>
+
+        <div class="thruster-target" id="thrusterTarget" onclick="hitTarget(event)">FIRE!</div>
+      </div>
+
+      <!-- Live Telemetry Readout -->
+      <div class="hud-stats">
+        <div class="hud-box">
+          <div class="hud-label">TRIAL</div>
+          <div class="hud-val" id="hudTrial">0 / 5</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">LAST LATENCY</div>
+          <div class="hud-val" id="hudLast">-- ms</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">MEAN REACTION</div>
+          <div class="hud-val text-success" id="hudMean">-- ms</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">LAPSES (&gt;500ms) / ERRORS</div>
+          <div class="hud-val text-warning" id="hudLapses">0 / 0</div>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="submit" id="proceedEegBtn" class="btn btn-success font-monospace fw-bold px-4 py-2" disabled>
+          PROCEED TO 14-CHANNEL EEG SCAN <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const totalTrials = 5;
+  let currentTrial = 0;
+  let reactionTimes = [];
+  let lapses = 0;
+  let falseStarts = 0;
+  let gameState = 'idle';
+  let stimulusStart = 0;
+  let waitTimer = null;
+
+  const arena = document.getElementById('gameArena');
+  const promptBox = document.getElementById('arenaPrompt');
+  const target = document.getElementById('thrusterTarget');
+
+  function startPvtGame(e) {
+    e.stopPropagation();
+    currentTrial = 0;
+    reactionTimes = [];
+    lapses = 0;
+    falseStarts = 0;
+    document.getElementById('proceedEegBtn').disabled = true;
+    scheduleNextStimulus();
+  }
+
+  function scheduleNextStimulus() {
+    if (currentTrial >= totalTrials) {
+      finishGame();
+      return;
+    }
+    gameState = 'waiting';
+    target.style.display = 'none';
+    promptBox.style.display = 'block';
+    promptBox.innerHTML = `<div class="text-info font-monospace fw-bold">TRIAL ${currentTrial + 1} OF ${totalTrials} — LOCKING RADAR... HOLD STEADY</div>`;
+
+    const delay = 1200 + Math.random() * 2300;
+    waitTimer = setTimeout(() => {
+      const rect = arena.getBoundingClientRect();
+      const maxX = Math.max(40, rect.width - 110);
+      const maxY = Math.max(40, rect.height - 110);
+      target.style.left = (20 + Math.random() * (maxX - 20)) + 'px';
+      target.style.top = (20 + Math.random() * (maxY - 20)) + 'px';
+
+      promptBox.style.display = 'none';
+      target.style.display = 'flex';
+      stimulusStart = performance.now();
+      gameState = 'active';
+    }, delay);
+  }
+
+  function hitTarget(e) {
+    e.stopPropagation();
+    if (gameState !== 'active') return;
+
+    const rt = Math.round(performance.now() - stimulusStart);
+    reactionTimes.push(rt);
+    if (rt > 500) lapses++;
+    currentTrial++;
+
+    const mean = Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length);
+    document.getElementById('hudTrial').textContent = `${currentTrial} / ${totalTrials}`;
+    document.getElementById('hudLast').textContent = `${rt} ms`;
+    document.getElementById('hudMean').textContent = `${mean} ms`;
+    document.getElementById('hudLapses').textContent = `${lapses} / ${falseStarts}`;
+
+    scheduleNextStimulus();
+  }
+
+  function handleArenaClick(e) {
+    if (gameState === 'waiting') {
+      clearTimeout(waitTimer);
+      falseStarts++;
+      document.getElementById('hudLapses').textContent = `${lapses} / ${falseStarts}`;
+      promptBox.innerHTML = `<div class="text-danger font-monospace fw-bold">⚠️ FALSE START! Wait for the green beacon. Recalibrating...</div>`;
+      setTimeout(scheduleNextStimulus, 1100);
+    }
+  }
+
+  function finishGame() {
+    gameState = 'done';
+    target.style.display = 'none';
+    const mean = Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length);
+    document.getElementById('inputAvgRxn').value = mean;
+    document.getElementById('inputLapses').value = lapses;
+    document.getElementById('proceedEegBtn').disabled = false;
+
+    let rating = mean < 260 ? 'PEAK REFLEXES' : (mean < 350 ? 'NOMINAL VIGILANCE' : 'FATIGUE DETECTED');
+    promptBox.style.display = 'block';
+    promptBox.innerHTML = `
+      <h5 class="text-success font-monospace fw-bold">✅ TELEMETRY CAPTURED: ${mean} ms (${rating})</h5>
+      <p class="small text-secondary font-monospace mb-2">Lapses (&gt;500ms): ${lapses} | False Starts: ${falseStarts}</p>
+      <button type="button" class="btn btn-sm btn-outline-info font-monospace" onclick="startPvtGame(event)">Re-run Calibration</button>
+    `;
+  }
+</script>
+{% endblock %}
